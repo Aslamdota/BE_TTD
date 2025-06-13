@@ -35,6 +35,7 @@ return [
 
             'paths' => [
                 'docs' => storage_path('api-docs'),
+                'docs_json' => 'api-docs.json',
                 'annotations' => [
                     base_path('app'),
                     base_path('routes'),
@@ -60,15 +61,30 @@ return [
                     'bearerFormat' => 'JWT',
                 ],
             ],
-
-            // PROXY HARUS ADA, walau tidak dipakai, set enabled ke false
-            'proxy' => [
-                'enabled' => false,
-                'host' => null,
-                'port' => null,
-                'username' => null,
-                'password' => null,
+            'securityDefinitions' => [
+                'securitySchemes' => [
+                    'sanctum' => [
+                        'type' => 'http',
+                        'description' => 'Use Bearer token from Sanctum login.',
+                        'in' => 'header',
+                        'scheme' => 'bearer',
+                        'bearerFormat' => 'JWT',
+                    ],
+                ],
             ],
+            'ui' => [
+                'authorization' => [
+                    'oauth2' => [
+                        'use_pkce_with_authorization_code_grant' => false
+                    ]
+                ]
+            ],
+
+            'proxy' => [],
+            'operations_sort' => null,
+            'additional_config_url' => null,
+            'validator_url' => null,
+            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', false),
         ],
     ],
 
@@ -87,9 +103,7 @@ return [
             'docs' => storage_path('api-docs'),
             'annotations' => [
                 base_path('app'),
-            ],
-            'models' => [
-                base_path('app/Models'),
+                base_path('routes'),
             ],
             'excludes' => [
                 base_path('app/Exceptions'),
@@ -106,6 +120,17 @@ return [
                 'in' => 'header',
                 'scheme' => 'bearer',
                 'bearerFormat' => 'JWT',
+            ],
+        ],
+        'securityDefinitions' => [
+            'securitySchemes' => [
+                'sanctum' => [
+                    'type' => 'http',
+                    'description' => 'Use Bearer token from Sanctum login.',
+                    'in' => 'header',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'JWT',
+                ],
             ],
         ],
     ],
