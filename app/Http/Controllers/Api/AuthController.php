@@ -11,16 +11,16 @@ use Laravel\sanctum\TokenRepository;
 
 /**
  * @OA\Info(
- *     version="1.0",
  *     title="VirSign API Documentation",
- *     description="API documentation for Electronic Signature System with Blockchain",
- *     @OA\Contact(email="support@example.com")
+ *     version="1.0"
  * )
+ *
  * @OA\Server(
- *     url="http://localhost:8000/api",
- *     description="Local API Server"
+ *     url=L5_SWAGGER_CONST_HOST,
+ *     description="Production API Server"
  * )
  */
+
 class AuthController extends Controller
 {
     /**
