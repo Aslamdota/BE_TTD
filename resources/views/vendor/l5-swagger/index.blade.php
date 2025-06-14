@@ -36,7 +36,7 @@
   <script>
     window.onload = function() {
       const ui = SwaggerUIBundle({
-        url: "{{ route('l5-swagger.default.docs') }}",
+        url: "https://bettd-production.up.railway.app/docs",
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
