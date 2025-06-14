@@ -6,10 +6,8 @@
   <title>VirSign API Documentation</title>
   <link rel="icon" type="image/png" href="https://bettd-production.up.railway.app/docs/asset/favicon-32x32.png">
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS with your exact gradient configuration -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Custom Tailwind Configuration untuk Theme Gradient [#692e66]/90 to [#b66864] -->
   <script>
     tailwind.config = {
       theme: {
@@ -17,73 +15,100 @@
           colors: {
             primary: '#692e66',
             secondary: '#b66864',
-            highlight: '#d4b2d8',
+            accent: '#d4b2d8',
           },
           backgroundImage: {
-            'gradient-primary': 'linear-gradient(135deg, rgba(105, 46, 102, 0.9) 0%, rgba(182, 104, 100, 1) 100%)',
+            'virsign-gradient': 'linear-gradient(135deg, rgba(105, 46, 102, 0.9) 0%, rgba(182, 104, 100, 1) 100%)',
           }
         }
       }
     }
   </script>
 
-  <!-- Swagger UI CSS CDN -->
+  <!-- Swagger UI CSS -->
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui.css">
   
-  <!-- Swagger JS CDN -->
+  <!-- Swagger JS -->
   <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-bundle.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-standalone-preset.js"></script>
 
   <style>
-    /* Custom Swagger Overrides dengan Tailwind-inspired Styling */
+    /* Custom Swagger overrides using your gradient */
     .swagger-ui .topbar {
-      @apply bg-gradient-primary text-white p-4 shadow-lg;
+      background-image: linear-gradient(135deg, rgba(105, 46, 102, 0.9) 0%, rgba(182, 104, 100, 1) 100%);
+      @apply text-white p-4 shadow-xl;
     }
     
     .swagger-ui .info .title {
-      @apply text-primary text-3xl font-bold mb-2;
+      @apply text-primary text-3xl font-bold mb-3;
     }
     
-    .swagger-ui .info h2 {
-      @apply text-secondary text-xl;
+    .swagger-ui .info .base-url {
+      @apply text-secondary font-medium;
     }
     
     .swagger-ui .btn {
-      @apply bg-gradient-primary text-white border-none transition-all hover:-translate-y-0.5 hover:shadow-md;
+      background-image: linear-gradient(135deg, rgba(105, 46, 102, 0.9) 0%, rgba(182, 104, 100, 1) 100%);
+      @apply text-white font-medium py-2 px-4 rounded-md shadow-md transition-all hover:shadow-lg hover:brightness-110;
     }
     
     .swagger-ui .opblock .opblock-summary {
-      @apply border-gray-200 transition-all hover:bg-gray-50 hover:shadow-sm;
+      @apply border border-gray-200 rounded-lg transition-all hover:bg-gray-50 hover:shadow-sm;
+    }
+    
+    .swagger-ui .opblock .opblock-summary-path {
+      @apply font-semibold text-gray-800;
     }
     
     .swagger-ui .model-box {
-      @apply bg-gray-50 rounded-lg shadow-sm;
+      @apply bg-gray-50 rounded-lg shadow-inner p-4;
     }
     
-    /* Floating Action Button (Tailwind Style) */
+    /* Floating action button with your gradient */
     .fab {
-      @apply fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-primary text-white flex items-center justify-center shadow-lg cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl;
+      background-image: linear-gradient(135deg, rgba(105, 46, 102, 0.9) 0%, rgba(182, 104, 100, 1) 100%);
+      @apply fixed bottom-8 right-8 w-14 h-14 rounded-full text-white flex items-center justify-center shadow-xl cursor-pointer transition-all hover:scale-105 hover:shadow-2xl z-50;
+    }
+    
+    /* API method tags */
+    .swagger-ui .opblock.opblock-get .opblock-summary-method {
+      @apply bg-green-500 text-white;
+    }
+    
+    .swagger-ui .opblock.opblock-post .opblock-summary-method {
+      @apply bg-blue-500 text-white;
+    }
+    
+    .swagger-ui .opblock.opblock-put .opblock-summary-method {
+      @apply bg-yellow-500 text-white;
+    }
+    
+    .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+      @apply bg-red-500 text-white;
     }
   </style>
 </head>
 
-<body class="bg-gray-50">
-  <!-- Custom Header dengan Tailwind -->
-  <header class="bg-gradient-primary text-white py-8 text-center mb-8">
+<body class="bg-gray-50 font-sans">
+  <!-- Gradient Header -->
+  <header class="bg-gradient-to-r from-[#692e66]/90 to-[#b66864] text-white py-10 text-center mb-8 shadow-md">
     <div class="container mx-auto px-4">
-      <h1 class="text-4xl font-bold mb-2">VirSign API Documentation</h1>
+      <div class="flex justify-center items-center mb-4">
+        <img src="https://bettd-production.up.railway.app/docs/asset/favicon-32x32.png" alt="Logo" class="h-10 mr-3">
+        <h1 class="text-4xl font-bold">VirSign API</h1>
+      </div>
       <p class="text-lg opacity-90 max-w-3xl mx-auto">
-        Comprehensive API reference for VirSign services with interactive examples and detailed descriptions.
+        Interactive API documentation with your branded gradient theme
       </p>
     </div>
   </header>
 
-  <!-- Swagger Container -->
-  <div class="container mx-auto px-4">
-    <div id="swagger-ui"></div>
-  </div>
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 pb-20">
+    <div id="swagger-ui" class="shadow-lg rounded-lg overflow-hidden"></div>
+  </main>
 
-  <!-- Floating Action Button (Back to Top) -->
+  <!-- Back to Top Button -->
   <div class="fab" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18 15l-6-6-6 6"/>
@@ -102,17 +127,25 @@
         ],
         layout: "StandaloneLayout",
         filter: true,
+        docExpansion: 'list',
+        defaultModelsExpandDepth: 1,
+        defaultModelExpandDepth: 1,
+        displayRequestDuration: true,
         tryItOutEnabled: true,
+        syntaxHighlight: {
+          activate: true,
+          theme: "arta"
+        },
         onComplete: function() {
-          // Tambahkan logo custom ke topbar
+          // Add custom logo to topbar
           const topbar = document.querySelector('.topbar');
           if (topbar) {
             const logoWrapper = document.createElement('div');
-            logoWrapper.className = 'flex items-center ml-5';
+            logoWrapper.className = 'flex items-center ml-5 gap-2';
             
             const logo = document.createElement('img');
             logo.src = 'https://bettd-production.up.railway.app/docs/asset/favicon-32x32.png';
-            logo.className = 'h-8 mr-3';
+            logo.className = 'h-8';
             
             const title = document.createElement('span');
             title.className = 'text-white font-semibold text-xl';
@@ -122,6 +155,12 @@
             logoWrapper.appendChild(title);
             topbar.insertBefore(logoWrapper, topbar.firstChild);
           }
+          
+          // Add subtle animation to operation blocks
+          const opblocks = document.querySelectorAll('.opblock');
+          opblocks.forEach(opblock => {
+            opblock.className += ' transition-transform duration-200 hover:scale-[1.002]';
+          });
         }
       });
       
