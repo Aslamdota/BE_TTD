@@ -7,6 +7,9 @@
   <!-- Gunakan HTTPS agar tidak kena mixed content -->
   <link rel="icon" type="image/png" href="https://bettd-production.up.railway.app/docs/asset/favicon-32x32.png">
 
+  <!-- Swagger UI CSS CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui.css">
+  
   <!-- HARDCODE CDN agar SwaggerUIBundle tidak error -->
   <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-bundle.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-standalone-preset.js"></script>
