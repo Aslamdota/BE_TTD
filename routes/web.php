@@ -7,6 +7,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/docs', [SwaggerController::class, 'docs'])->name('l5-swagger.default.docs');
+Route::get('/docs', function () {
+    return response()->file(storage_path('api-docs/api-docs.json'));
+});
 
 
