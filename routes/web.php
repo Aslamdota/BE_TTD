@@ -9,6 +9,7 @@ Route::get('/', function () {
 
 Route::get('/docs', function () {
     return response()->file(storage_path('api-docs/api-docs.json'));
-});
+})->name('l5-swagger.default.docs');
+
 
 
