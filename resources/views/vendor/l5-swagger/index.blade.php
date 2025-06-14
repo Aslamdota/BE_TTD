@@ -98,7 +98,7 @@
         <h1 class="text-4xl font-bold">VirSign API</h1>
       </div>
       <p class="text-lg opacity-90 max-w-3xl mx-auto">
-        Interactive API documentation with your branded gradient theme
+        Interactive API documentation
       </p>
     </div>
   </header>
@@ -118,7 +118,7 @@
   <script>
     window.onload = function() {
       const ui = SwaggerUIBundle({
-        url: "https://bettd-production.up.railway.app/docs",
+         url: "https://bettd-production.up.railway.app/api/docs-json",
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [

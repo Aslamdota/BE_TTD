@@ -8,9 +8,9 @@ Route::get('/', function () {
 });
 
 Route::middleware('swagger.protect')->group(function () {   
-    Route::get('/docs', function () {
-        return response()->file(storage_path('api-docs/api-docs.json'));
-    })->name('l5-swagger.default.docs');
+    Route::get('/docs', [SwaggerController::class, 'docs']);
+
+    Route::get('/api/docs-json', [SwaggerController::class, 'docsJson'])->name('l5-swagger.default.docs');
 });
 
 
