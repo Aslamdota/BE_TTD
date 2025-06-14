@@ -6,7 +6,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost",
+            "url": "https://bettd-production.up.railway.app/api",
             "description": "Production API Server"
         }
     ],
