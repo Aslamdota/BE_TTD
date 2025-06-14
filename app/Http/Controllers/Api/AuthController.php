@@ -16,7 +16,7 @@ use Laravel\sanctum\TokenRepository;
  * )
  *
  * @OA\Server(
- *     url="https://bettd-production.up.railway.app/api",
+ *     url="https://bettd-production.up.railway.app/",
  *     description="Production API Server"
  * )
  */
