@@ -7,5 +7,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/docs', [SwaggerController::class, 'docs']);
+Route::get('/docs', [SwaggerController::class, 'docs'])->name('l5-swagger.default.docs');
+
 
