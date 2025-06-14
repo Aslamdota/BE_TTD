@@ -16,7 +16,7 @@ use Laravel\sanctum\TokenRepository;
  * )
  *
  * @OA\Server(
- *     url=L5_SWAGGER_CONST_HOST,
+ *     url="https://bettd-production.up.railway.app/api",
  *     description="Production API Server"
  * )
  */
