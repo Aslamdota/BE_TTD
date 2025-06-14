@@ -118,7 +118,7 @@
   <script>
     window.onload = function() {
       const ui = SwaggerUIBundle({
-         url: "https://bettd-production.up.railway.app/api/docs-json",
+        url: "https://bettd-production.up.railway.app/docs",
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
