@@ -1,12 +1,12 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "VerSign API Documentation",
+        "title": "VirSign API Documentation",
         "description": "API documentation for Electronic Signature System with Blockchain",
         "contact": {
             "email": "support@example.com"
         },
-        "version": "1.0.0"
+        "version": "1.0"
     },
     "servers": [
         {

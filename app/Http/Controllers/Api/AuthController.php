@@ -11,8 +11,8 @@ use Laravel\sanctum\TokenRepository;
 
 /**
  * @OA\Info(
- *     version="1.0.0",
- *     title="VerSign API Documentation",
+ *     version="1.0",
+ *     title="VirSign API Documentation",
  *     description="API documentation for Electronic Signature System with Blockchain",
  *     @OA\Contact(email="support@example.com")
  * )
