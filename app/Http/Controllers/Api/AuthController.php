@@ -99,14 +99,15 @@ class AuthController extends Controller
      *         @OA\JsonContent(
      *             required={"email","password"},
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password123")
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="remember_me", type="boolean", example=true, description="Set true to remember user")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Login successful",
      *         @OA\JsonContent(
-     *             @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
+     *             @OA\Property(property="access_token", type="string", example="..."),
      *             @OA\Property(property="token_type", type="string", example="Bearer")
      *         )
      *     ),
@@ -123,10 +124,13 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|string'
+            'password' => 'required|string',
+            'remember_me' => 'boolean'
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        $remember = $request->boolean('remember_me', false);
+
+        if (!Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $remember)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 

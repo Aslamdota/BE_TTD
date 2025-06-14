@@ -904,7 +904,7 @@
                     "API Management"
                 ],
                 "summary": "Generate new API keys",
-                "operationId": "47c548e285c6d9e21d3509816a88f49a",
+                "operationId": "d29b2b69e1803819f3f90ef843fc1a52",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -936,7 +936,7 @@
                     "Test"
                 ],
                 "summary": "Test endpoint for Swagger",
-                "operationId": "b3ce40b669cd2c15eb447dce002f41f4",
+                "operationId": "33dfe59c7dd7a0901c37458878b98c99",
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1080,6 +1080,11 @@
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
+                                    },
+                                    "remember_me": {
+                                        "description": "Set true to remember user",
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -1096,7 +1101,7 @@
                                     "properties": {
                                         "access_token": {
                                             "type": "string",
-                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                                            "example": "..."
                                         },
                                         "token_type": {
                                             "type": "string",
