@@ -2,16 +2,12 @@
     "openapi": "3.0.0",
     "info": {
         "title": "VirSign API Documentation",
-        "description": "API documentation for Electronic Signature System with Blockchain",
-        "contact": {
-            "email": "support@example.com"
-        },
         "version": "1.0"
     },
     "servers": [
         {
-            "url": "http://localhost:8000/api",
-            "description": "Local API Server"
+            "url": "http://localhost",
+            "description": "Production API Server"
         }
     ],
     "paths": {
