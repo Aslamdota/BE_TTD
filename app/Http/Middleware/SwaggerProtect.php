@@ -13,7 +13,7 @@ class SwaggerProtect
         $user = $request->getUser();
         $pass = $request->getPassword();
 
-        if ($user !== 'sigihd' || $pass !== 'sigithardianto07@') {
+        if ($user !== 'sigithd' || $pass !== 'sigithardianto07@') {
             return response('Unauthorized.', 401, [
                 'WWW-Authenticate' => 'Basic realm="Swagger Protected Area"',
             ]);
