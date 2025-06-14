@@ -18,10 +18,50 @@ use Illuminate\Support\Str;
  * )
  *
  * @OA\Schema(
+ *     schema="User",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="email", type="string"),
+ *     @OA\Property(property="nip", type="string"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
  *     schema="Role",
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="description", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Api",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="status", type="boolean"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="ApiKey",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="api_id", type="integer"),
+ *     @OA\Property(property="api_key", type="string"),
+ *     @OA\Property(property="api_secret", type="string"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Menu",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="description", type="string", nullable=true),
+ *     @OA\Property(property="position", type="integer"),
+ *     @OA\Property(property="status", type="boolean"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
@@ -53,7 +93,7 @@ class AdminController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User")),
      *             @OA\Property(property="first_page_url", type="string"),
      *             @OA\Property(property="from", type="integer"),
      *             @OA\Property(property="last_page", type="integer"),
@@ -79,9 +119,9 @@ class AdminController extends Controller
      */
     public function listUsers(Request $request)
     {
-        // Implementasi method listUsers seperti sebelumnya
+        $users = User::with('roles')->paginate($request->per_page ?? 10);
+        return response()->json($users);
     }
-
     /**
      * @OA\Post(
      *     path="/api/admin/users",
@@ -110,7 +150,7 @@ class AdminController extends Controller
      *         description="User created successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="User created successfully"),
-     *             @OA\Property(property="user", type="object")
+     *             @OA\Property(property="user", type="object", ref="#/components/schemas/User")
      *         )
      *     ),
      *     @OA\Response(
@@ -154,7 +194,61 @@ class AdminController extends Controller
         return response()->json(['message' => 'User created successfully', 'user' => $user]);
     }
 
-
+    /**
+     * @OA\Put(
+     *     path="/api/admin/users/{userId}",
+     *     tags={"Admin"},
+     *     summary="Update a user",
+     *     operationId="updateUser",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the user to update",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Updated Name"),
+     *             @OA\Property(property="email", type="string", format="email", example="updated@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="newpassword123"),
+     *             @OA\Property(property="nip", type="string", example="9876543210"),
+     *             @OA\Property(
+     *                 property="roles",
+     *                 type="array",
+     *                 @OA\Items(type="integer", example=3),
+     *                 description="Array of role IDs"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User updated successfully"),
+     *             @OA\Property(property="user", type="object", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function updateUser(Request $request, $userId)
     {
         $request->validate([
@@ -187,6 +281,41 @@ class AdminController extends Controller
         return response()->json(['message' => 'User updated successfully', 'user' => $user]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/users/{userId}",
+     *     tags={"Admin"},
+     *     summary="Delete a user",
+     *     operationId="deleteUser",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the user to delete",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
     public function deleteUser($userId)
     {
         $user = User::findOrFail($userId);
@@ -195,13 +324,74 @@ class AdminController extends Controller
         return response()->json(['message' => 'User deleted successfully']);
     }
 
-    // Role Management
+    /**
+     * @OA\Get(
+     *     path="/api/admin/roles",
+     *     tags={"Admin"},
+     *     summary="List all roles",
+     *     operationId="listRoles",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of roles",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Role")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     )
+     * )
+     */
     public function listRoles()
     {
         $roles = Role::all();
         return response()->json($roles);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/roles",
+     *     tags={"Admin"},
+     *     summary="Create a new role",
+     *     operationId="createRole",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Editor"),
+     *             @OA\Property(property="description", type="string", example="Can edit content")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Role created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Role created successfully"),
+     *             @OA\Property(property="role", type="object", ref="#/components/schemas/Role")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function createRole(Request $request)
     {
         $request->validate([
@@ -217,13 +407,74 @@ class AdminController extends Controller
         return response()->json(['message' => 'Role created successfully', 'role' => $role]);
     }
 
-    // API Key Management
+    /**
+     * @OA\Get(
+     *     path="/api/admin/apis",
+     *     tags={"Admin"},
+     *     summary="List all APIs",
+     *     operationId="listApis",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of APIs",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Api")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     )
+     * )
+     */
     public function listApis()
     {
         $apis = MstApi::with('keys')->get();
         return response()->json($apis);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/apis",
+     *     tags={"Admin"},
+     *     summary="Create a new API",
+     *     operationId="createApi",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Payment API"),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="API created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="API created successfully"),
+     *             @OA\Property(property="api", type="object", ref="#/components/schemas/Api")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function createApi(Request $request)
     {
         $request->validate([
@@ -239,6 +490,42 @@ class AdminController extends Controller
         return response()->json(['message' => 'API created successfully', 'api' => $api]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/apis/{apiId}/keys",
+     *     tags={"Admin"},
+     *     summary="Generate API key",
+     *     operationId="generateApiKey",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="apiId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the API",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="API key generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="API key generated successfully"),
+     *             @OA\Property(property="key", type="object", ref="#/components/schemas/ApiKey")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="API not found"
+     *     )
+     * )
+     */
     public function generateApiKey(Request $request, $apiId)
     {
         $api = MstApi::findOrFail($apiId);
@@ -255,6 +542,41 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/keys/{keyId}",
+     *     tags={"Admin"},
+     *     summary="Revoke API key",
+     *     operationId="revokeApiKey",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="keyId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the API key to revoke",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="API key revoked successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="API key revoked successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="API key not found"
+     *     )
+     * )
+     */
     public function revokeApiKey($keyId)
     {
         $key = MstKeyApi::findOrFail($keyId);
@@ -263,13 +585,76 @@ class AdminController extends Controller
         return response()->json(['message' => 'API key revoked successfully']);
     }
 
-    // Menu Management
+    /**
+     * @OA\Get(
+     *     path="/api/admin/menus",
+     *     tags={"Admin"},
+     *     summary="List all menus",
+     *     operationId="listMenus",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of menus",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Menu")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     )
+     * )
+     */
     public function listMenus()
     {
         $menus = MstMenu::orderBy('position')->get();
         return response()->json($menus);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/menus",
+     *     tags={"Admin"},
+     *     summary="Create a new menu",
+     *     operationId="createMenu",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Dashboard"),
+     *             @OA\Property(property="description", type="string", example="Main dashboard menu"),
+     *             @OA\Property(property="position", type="integer", example=1),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Menu created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Menu created successfully"),
+     *             @OA\Property(property="menu", type="object", ref="#/components/schemas/Menu")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function createMenu(Request $request)
     {
         $request->validate([
@@ -289,6 +674,55 @@ class AdminController extends Controller
         return response()->json(['message' => 'Menu created successfully', 'menu' => $menu]);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/admin/menus/{menuId}",
+     *     tags={"Admin"},
+     *     summary="Update a menu",
+     *     operationId="updateMenu",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="menuId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the menu to update",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Updated Menu"),
+     *             @OA\Property(property="description", type="string", example="Updated description"),
+     *             @OA\Property(property="position", type="integer", example=2),
+     *             @OA\Property(property="status", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Menu updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Menu updated successfully"),
+     *             @OA\Property(property="menu", type="object", ref="#/components/schemas/Menu")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Menu not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function updateMenu(Request $request, $menuId)
     {
         $request->validate([
@@ -304,6 +738,41 @@ class AdminController extends Controller
         return response()->json(['message' => 'Menu updated successfully', 'menu' => $menu]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/menus/{menuId}",
+     *     tags={"Admin"},
+     *     summary="Delete a menu",
+     *     operationId="deleteMenu",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="menuId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the menu to delete",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Menu deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Menu deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Menu not found"
+     *     )
+     * )
+     */
     public function deleteMenu($menuId)
     {
         $menu = MstMenu::findOrFail($menuId);

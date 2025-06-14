@@ -2,10 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
+use App\Http\Controllers\Api\ApiKeyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/documents/{documentId}/sign', [DocumentController::class, 'sign']);
     Route::get('/documents', [DocumentController::class, 'list']);
     Route::get('/documents/pending', [DocumentController::class, 'pendingSignatures']);
+    Route::get('/test', [ApiKeyController::class, 'test']);
 
     // Blockchain
     Route::post('/blockchain/store', [BlockchainController::class, 'storeHash']);

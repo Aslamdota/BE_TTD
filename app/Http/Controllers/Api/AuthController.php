@@ -1,17 +1,24 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Laravel\sanctum\TokenRepository;
 
 /**
- * @OA\Tag(
- *     name="Auth",
- *     description="Authentication endpoints"
+ * @OA\Info(
+ *     version="1.0.0",
+ *     title="VerSign API Documentation",
+ *     description="API documentation for Electronic Signature System with Blockchain",
+ *     @OA\Contact(email="support@example.com")
+ * )
+ * @OA\Server(
+ *     url="http://localhost:8000/api",
+ *     description="Local API Server"
  * )
  */
 class AuthController extends Controller

@@ -2,24 +2,13 @@
 
 return [
     'default' => 'default',
-
     'documentations' => [
         'default' => [
             'api' => [
                 'title' => 'E-TTD API Documentation',
                 'version' => '1.0.0',
                 'description' => 'API documentation for Electronic Signature System with Blockchain',
-                'termsOfService' => 'https://example.com/terms',
-                'contact' => [
-                    'name' => 'API Support',
-                    'email' => 'support@example.com',
-                ],
-                'license' => [
-                    'name' => 'Apache 2.0',
-                    'url' => 'http://www.apache.org/licenses/LICENSE-2.0.html',
-                ],
             ],
-
             'routes' => [
                 'api' => 'api/documentation',
                 'docs' => 'docs',
@@ -30,28 +19,16 @@ return [
                     'docs' => [],
                     'oauth2_callback' => [],
                 ],
-                'group_by' => 'tag',
             ],
-
             'paths' => [
                 'docs' => storage_path('api-docs'),
                 'docs_json' => 'api-docs.json',
-                'annotations' => [
-                    base_path('app'),
-                    base_path('routes'),
-                ],
-                'models' => [
-                    base_path('app/Models'),
-                ],
-                'excludes' => [
-                    base_path('app/Exceptions'),
-                    base_path('app/Console'),
-                ],
-                'base' => '/',
-                'docs_json' => 'api-docs.json',
                 'docs_yaml' => 'api-docs.yaml',
+                'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
+                'annotations' => [
+                    base_path('app/Http/Controllers'), // scan semua controller & SwaggerDefinitions.php
+                ],
             ],
-
             'security' => [
                 'sanctum' => [
                     'type' => 'http',
@@ -79,15 +56,13 @@ return [
                     ]
                 ]
             ],
-
             'proxy' => [],
             'operations_sort' => null,
             'additional_config_url' => null,
             'validator_url' => null,
-            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', false),
+            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', true),
         ],
     ],
-
     'defaults' => [
         'routes' => [
             'docs' => 'docs',
@@ -101,26 +76,13 @@ return [
         ],
         'paths' => [
             'docs' => storage_path('api-docs'),
-            'annotations' => [
-                base_path('app'),
-                base_path('routes'),
-            ],
-            'excludes' => [
-                base_path('app/Exceptions'),
-                base_path('app/Console'),
-            ],
-            'base' => '/',
-            'docs_json' => 'api-docs.json',
-            'docs_yaml' => 'api-docs.yaml',
+            'views' => base_path('resources/views/vendor/l5-swagger'),
+            'base' => env('L5_SWAGGER_BASE_PATH', null),
+            'excludes' => [],
         ],
-        'security' => [
-            'sanctum' => [
-                'type' => 'http',
-                'description' => 'Use Bearer token from Sanctum login.',
-                'in' => 'header',
-                'scheme' => 'bearer',
-                'bearerFormat' => 'JWT',
-            ],
+        'scanOptions' => [
+            'default_processors_configuration' => [],
+            'open_api_spec_version' => env('L5_SWAGGER_OPEN_API_SPEC_VERSION', \L5Swagger\Generator::OPEN_API_DEFAULT_SPEC_VERSION),
         ],
         'securityDefinitions' => [
             'securitySchemes' => [
@@ -132,6 +94,29 @@ return [
                     'bearerFormat' => 'JWT',
                 ],
             ],
+            'security' => [],
+        ],
+        'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', true),
+        'generate_yaml_copy' => env('L5_SWAGGER_GENERATE_YAML_COPY', false),
+        'proxy' => [],
+        'additional_config_url' => null,
+        'operations_sort' => null,
+        'validator_url' => null,
+        'ui' => [
+            'display' => [
+                'dark_mode' => env('L5_SWAGGER_UI_DARK_MODE', false),
+                'doc_expansion' => env('L5_SWAGGER_UI_DOC_EXPANSION', 'none'),
+                'filter' => env('L5_SWAGGER_UI_FILTERS', true),
+            ],
+            'authorization' => [
+                'persist_authorization' => env('L5_SWAGGER_UI_PERSIST_AUTHORIZATION', false),
+                'oauth2' => [
+                    'use_pkce_with_authorization_code_grant' => false,
+                ],
+            ],
+        ],
+        'constants' => [
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://localhost:8000'),
         ],
     ],
 ];

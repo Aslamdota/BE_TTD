@@ -50,4 +50,19 @@ class ApiKeyController extends Controller
             'key_info' => $key
         ], 201);
     }
+    /**
+     * @OA\Get(
+     *     path="/api/test",
+     *     tags={"Test"},
+     *     summary="Test endpoint for Swagger",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     )
+     * )
+     */
+    public function test()
+    {
+        return response()->json(['message' => 'Swagger works!']);
+    }
 }
