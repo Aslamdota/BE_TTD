@@ -26,7 +26,8 @@ return [
                     'asset' => [],
                     'docs' => [],
                     'oauth2_callback' => [],
-                ],
+                ],            
+            'enabled' => env('L5_SWAGGER_ENABLE', true),
             ],
             'paths' => [
                 'docs' => storage_path('api-docs'),
@@ -96,7 +97,7 @@ return [
                 'asset' => [],
                 'docs' => [],
                 'oauth2_callback' => [],
-            ],
+            ],        
         ],
         'paths' => [
             'docs' => storage_path('api-docs'),
