@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(except: ['*']);
+
+        $middleware->alias([
+            'swagger.protect' => \App\Http\Middleware\SwaggerProtect::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
