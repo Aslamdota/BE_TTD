@@ -8,12 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SwaggerProtect
 {
-    protected array $allowedIps = [
-        '127.0.0.1',
-        '::1',
-        '160.19.227.187',
-    ];
-
     protected array $blockedUserAgents = [
         'sqlmap',
         'nmap',
@@ -24,10 +18,6 @@ class SwaggerProtect
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (!in_array($request->ip(), $this->allowedIps)) {
-            return response('Access denied: IP not allowed.', 403);
-        }
-
         $userAgent = strtolower($request->header('User-Agent', ''));
         foreach ($this->blockedUserAgents as $badAgent) {
             if (str_contains($userAgent, $badAgent)) {
