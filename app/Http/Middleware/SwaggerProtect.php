@@ -25,10 +25,6 @@ class SwaggerProtect
             }
         }
 
-        if (!$request->isSecure() && app()->environment('production')) {
-            return response('HTTPS is required for Swagger access.', 403);
-        }
-
         $validUser = env('SWAGGER_USER', 'defaultuser');
         $validPass = env('SWAGGER_PASS', 'defaultpass');
 
