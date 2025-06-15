@@ -11,7 +11,7 @@ class SwaggerProtect
     protected array $allowedIps = [
         '127.0.0.1',
         '::1',
-        '192.168.101.15',
+        '160.19.227.187',
     ];
 
     protected array $blockedUserAgents = [
