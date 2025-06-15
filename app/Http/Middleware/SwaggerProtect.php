@@ -25,13 +25,20 @@ class SwaggerProtect
             }
         }
 
-        $validUser = 'sigithd';
-        $validPass = 'sigithardianto07@';
+        if (!$request->isSecure() && app()->environment('production')) {
+            return response('HTTPS is required for Swagger access.', 403);
+        }
+
+        $validUser = env('SWAGGER_USER', 'defaultuser');
+        $validPass = env('SWAGGER_PASS', 'defaultpass');
 
         $providedUser = $request->getUser();
         $providedPass = $request->getPassword();
 
-        if (!$this->secureCompare($providedUser, $validUser) || !$this->secureCompare($providedPass, $validPass)) {
+        if (
+            !$this->secureCompare((string) $providedUser, (string) $validUser) ||
+            !$this->secureCompare((string) $providedPass, (string) $validPass)
+        ) {
             return response('Unauthorized.', 401, [
                 'WWW-Authenticate' => 'Basic realm="Swagger Protected Area"',
             ]);
@@ -42,18 +49,6 @@ class SwaggerProtect
 
     protected function secureCompare($a, $b): bool
     {
-        if (function_exists('hash_equals')) {
-            return hash_equals($a, $b);
-        }
-
-        if (strlen($a) !== strlen($b)) {
-            return false;
-        }
-
-        $res = 0;
-        for ($i = 0; $i < strlen($a); $i++) {
-            $res |= ord($a[$i]) ^ ord($b[$i]);
-        }
-        return $res === 0;
+        return hash_equals((string) $a, (string) $b);
     }
 }
