@@ -26,8 +26,11 @@ Route::post('/verify', [DocumentController::class, 'verify']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    // Auth
+    // Auth     
+    Route::get('/check-session', [AuthController::class, 'checkSession']);
+    Route::get('/active-session', [AuthController::class, 'activeSession']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/force-logout', [AuthController::class, 'forceLogout']);
     Route::get('/user', [AuthController::class, 'user']);
 
     // Documents

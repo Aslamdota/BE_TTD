@@ -946,6 +946,7 @@
                     "Auth"
                 ],
                 "summary": "Register a new user",
+                "description": "Register a new user",
                 "operationId": "register",
                 "requestBody": {
                     "required": true,
@@ -1056,6 +1057,7 @@
                     "Auth"
                 ],
                 "summary": "Login user",
+                "description": "Authenticate user and create token",
                 "operationId": "login",
                 "requestBody": {
                     "required": true,
@@ -1078,7 +1080,6 @@
                                         "example": "password123"
                                     },
                                     "remember_me": {
-                                        "description": "Set true to remember user",
                                         "type": "boolean",
                                         "example": true
                                     }
@@ -1097,11 +1098,38 @@
                                     "properties": {
                                         "access_token": {
                                             "type": "string",
-                                            "example": "..."
+                                            "example": "1|abcdefghijklmnopqrstuvwxyz"
                                         },
                                         "token_type": {
                                             "type": "string",
                                             "example": "Bearer"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "is_login": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1134,6 +1162,7 @@
                     "Auth"
                 ],
                 "summary": "Logout user",
+                "description": "Logout user (revoke token)",
                 "operationId": "logout",
                 "responses": {
                     "200": {
@@ -1160,7 +1189,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Unauthenticated."
+                                            "example": "Unauthenticated"
                                         }
                                     },
                                     "type": "object"
@@ -1182,6 +1211,7 @@
                     "Auth"
                 ],
                 "summary": "Get authenticated user details",
+                "description": "Get authenticated user details",
                 "operationId": "getUser",
                 "responses": {
                     "200": {
@@ -1206,23 +1236,14 @@
                                             "type": "string",
                                             "example": "1234567890"
                                         },
-                                        "email_verified_at": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "nullable": true
-                                        },
-                                        "created_at": {
-                                            "type": "string",
-                                            "format": "date-time"
-                                        },
-                                        "updated_at": {
-                                            "type": "string",
-                                            "format": "date-time"
+                                        "is_login": {
+                                            "type": "boolean",
+                                            "example": true
                                         },
                                         "roles": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "type": "string"
                                             }
                                         }
                                     },
@@ -1239,7 +1260,171 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Unauthenticated."
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/check-session": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Check session validity",
+                "description": "Check session validity",
+                "operationId": "checkSession",
+                "responses": {
+                    "200": {
+                        "description": "Session is valid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "isValid": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "isValid": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Session expired"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/active-session": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get active session information",
+                "description": "Get active session information",
+                "operationId": "activeSession",
+                "responses": {
+                    "200": {
+                        "description": "Active session information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "hasActiveSession": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "lastActivity": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        },
+                                        "device": {
+                                            "type": "string",
+                                            "example": "Mozilla/5.0 (Windows NT 10.0)"
+                                        },
+                                        "ip": {
+                                            "type": "string",
+                                            "example": "127.0.0.1"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/force-logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Force logout from all devices",
+                "description": "Force logout from all devices",
+                "operationId": "forceLogout",
+                "responses": {
+                    "200": {
+                        "description": "Logged out from all devices",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out from all devices"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
                                         }
                                     },
                                     "type": "object"
