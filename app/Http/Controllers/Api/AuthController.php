@@ -149,7 +149,7 @@ class AuthController extends Controller
         $user->save();
 
         $token = $user->createToken('Personal Access Token')->plainTextToken;
-        $roles = $user->getRoleNames();
+        $roles = $user->roles->pluck('name');
 
         return response()->json([
             'access_token' => $token,
