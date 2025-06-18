@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('public_key')->nullable();
             $table->string('private_key')->nullable();
+            $table->boolean('is_login')->default(false);
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

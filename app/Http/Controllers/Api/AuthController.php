@@ -135,9 +135,11 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
-        $token = $user->createToken('Personal Access Token')->plainTextToken;
+        $user->is_login = true;
+        $user->save();
 
-        $roles = $user->roles->pluck('name'); 
+        $token = $user->createToken('Personal Access Token')->plainTextToken;
+        $roles = $user->roles->pluck('name');
 
         return response()->json([
             'access_token' => $token,
@@ -147,6 +149,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'roles' => $roles,
+                'is_login' => $user->is_login,
             ]
         ]);
     }
@@ -176,7 +179,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user->is_login = false;
+        $user->save();
+
+        $user->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Successfully logged out']);
     }

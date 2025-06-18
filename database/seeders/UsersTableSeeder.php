@@ -26,7 +26,8 @@ class UsersTableSeeder extends Seeder
                 'name' => 'Dosen Contoh',
                 'email' => 'dosen@iwu.com',
                 'password' => Hash::make('password123'),
-                'nip' => '0987654321'
+                'nip' => '0987654321',
+                'is_login' => false
             ]);
 
             $dosen->generateKeyPair();
