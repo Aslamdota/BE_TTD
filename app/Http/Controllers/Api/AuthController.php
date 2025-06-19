@@ -192,10 +192,13 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
-        $user->is_login = false;
-        $user->save();
-
-        $user->currentAccessToken()->delete();
+        
+        if ($user) {
+            $user->is_login = false;
+            $user->save();
+            
+            $request->user()->currentAccessToken()->delete();
+        }
 
         return response()->json(['message' => 'Successfully logged out']);
     }
@@ -273,14 +276,35 @@ class AuthController extends Controller
     {
         $user = $request->user();
         
-        if (!$user || !$user->is_login) {
+        if (!$user) {
+            return response()->json([
+                'isValid' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $token = $user->currentAccessToken();
+        if (!$token) {
+            return response()->json([
+                'isValid' => false,
+                'message' => 'Token invalid'
+            ], 401);
+        }
+
+        if (!$user->is_login) {
+            $user->tokens()->where('id', $token->id)->delete();
+            
             return response()->json([
                 'isValid' => false,
                 'message' => 'Session expired'
             ], 401);
         }
 
-        return response()->json(['isValid' => true]);
+        return response()->json([
+            'isValid' => true,
+            'user' => $user->only(['id', 'name', 'email', 'roles']),
+            'lastActivity' => $token->last_used_at
+        ]);
     }
 
     /**
@@ -326,8 +350,16 @@ class AuthController extends Controller
             'hasActiveSession' => $user->is_login,
             'lastActivity' => $lastUsed,
             'device' => $request->userAgent(),
-            'ip' => $request->ip()
+            'ip' => $request->ip(),
+            'location' => $this->getLocationFromIp($request->ip()),
+            'sessionCreatedAt' => $token->created_at
         ]);
+    }
+
+    protected function getLocationFromIp($ip)
+    {
+        // In production, you might want to use a proper IP geolocation service
+        return $ip === '127.0.0.1' ? 'Localhost' : 'Unknown';
     }
 
     /**
@@ -355,14 +387,21 @@ class AuthController extends Controller
      *     )
      * )
      */
-    public function forceLogout(Request $request)
-    {
+     public function forceLogout(Request $request)
+     {
         $user = $request->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        Log::info("Force logout initiated for user {$user->id} from IP: {$request->ip()}");
+
         $user->is_login = false;
         $user->save();
         
         $user->tokens()->delete();
         
         return response()->json(['message' => 'Logged out from all devices']);
-    }
+     }
 }
