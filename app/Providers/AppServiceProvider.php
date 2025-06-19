@@ -23,8 +23,9 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('api', function ($request) {
         return Limit::perMinute(60)->by(
-            optional($request->user())->id ?: $request->ip()
-        );
-    });
+                optional($request->user())->id ?: $request->ip()
+            );
+        });    
+        \Illuminate\Support\Facades\DB::reconnect('mysql');
     }
 }
