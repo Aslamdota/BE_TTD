@@ -259,7 +259,7 @@ class AuthController extends Controller
      * Check session validity
      * 
      * @OA\Get(
-     *     path="/api/auth/check-session",
+     *     path="/api/check-session",
      *     tags={"Auth"},
      *     summary="Check session validity",
      *     operationId="checkSession",
@@ -320,7 +320,7 @@ class AuthController extends Controller
      * Get active session information
      * 
      * @OA\Get(
-     *     path="/api/auth/active-session",
+     *     path="/api/active-session",
      *     tags={"Auth"},
      *     summary="Get active session information",
      *     operationId="activeSession",
@@ -375,7 +375,7 @@ class AuthController extends Controller
      * Force logout from all devices
      * 
      * @OA\Post(
-     *     path="/api/auth/force-logout",
+     *     path="/api/force-logout",
      *     tags={"Auth"},
      *     summary="Force logout from all devices",
      *     operationId="forceLogout",
@@ -397,20 +397,12 @@ class AuthController extends Controller
      * )
      */
      public function forceLogout(Request $request)
-     {
+    {
         $user = $request->user();
-        
-        if (!$user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
-
-        Log::info("Force logout initiated for user {$user->id} from IP: {$request->ip()}");
-
         $user->is_login = false;
         $user->save();
-        
         $user->tokens()->delete();
         
         return response()->json(['message' => 'Logged out from all devices']);
-     }
+    }
 }
