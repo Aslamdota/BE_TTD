@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 use Laravel\Sanctum\PersonalAccessToken;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 /**
  * @OA\Info(
  *     title="VirSign API Documentation",
@@ -132,50 +133,80 @@ class AuthController extends Controller
      *     )
      * )
      */
-   public function login(Request $request)
-   {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-            'remember_me' => 'boolean'
-        ]);
+    public function login(Request $request)
+    {
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+                'remember_me' => 'sometimes|boolean',
+                'force_logout' => 'sometimes|boolean' // New parameter for force logout
+            ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+            $user = User::with('roles')->where('email', $credentials['email'])->first();
 
-        if ($user && $user->is_login) {
+            if ($user && $user->is_login && !($credentials['force_logout'] ?? false)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Anda sudah login di perangkat lain',
+                    'already_logged_in' => true,
+                    'remaining_attempts' => null,
+                    'is_blocked' => false
+                ], 403);
+            }
+
+            // Attempt authentication
+            if (!Auth::attempt($request->only('email', 'password'))) {
+                throw ValidationException::withMessages([
+                    'email' => [__('auth.failed')],
+                ]);
+            }
+
+            $user = $request->user();
+            if ($credentials['force_logout'] ?? false) {
+                $user->tokens()->delete();
+            } else {
+                $user->currentAccessToken()?->delete();
+            }
+
+            $user->is_login = true;
+            $user->save();
+
+            $token = $user->createToken('VirSign Access Token')->plainTextToken;
+            $roles = $user->roles->pluck('name');
+
             return response()->json([
-                'message' => 'Anda sudah login di perangkat lain',
-                'already_logged_in' => true
-            ], 403);
+                'status' => true,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => $roles,
+                    'is_login' => $user->is_login,
+                ]
+            ]);
+
+        } catch (ValidationException $e) {
+            Log::warning('Login validation failed', ['error' => $e->errors()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+                'already_logged_in' => false,
+                'is_blocked' => false
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Login failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat login',
+                'already_logged_in' => false,
+                'is_blocked' => false
+            ], 500);
         }
-
-        if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $user = $request->user();
-        
-        $user->tokens()->delete();
-        
-        $user->is_login = true;
-        $user->save();
-
-        $token = $user->createToken('Personal Access Token')->plainTextToken;
-        $roles = $user->roles->pluck('name');
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'roles' => $roles,
-                'is_login' => $user->is_login,
-            ]
-        ]);
     }
-
     /**
      * Logout user (revoke token)
      * 
@@ -203,13 +234,27 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $user = $request->user();
-        $user->is_login = false;
-        $user->save();
-        
-        $request->user()->currentAccessToken()->delete();
-        
-        return response()->json(['message' => 'Successfully logged out']);
+        try {
+            $user = $request->user();
+            
+            if ($user) {
+                $user->currentAccessToken()?->delete();
+                $user->is_login = false;
+                $user->save();
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Logout berhasil'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Logout failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat logout'
+            ], 500);
+        }
     }
 
     /**
@@ -283,37 +328,37 @@ class AuthController extends Controller
      */
     public function checkSession(Request $request)
     {
-        $user = $request->user();
-        
-        if (!$user) {
-            return response()->json([
-                'isValid' => false,
-                'message' => 'Unauthenticated'
-            ], 401);
-        }
-
-        $token = $user->currentAccessToken();
-        if (!$token) {
-            return response()->json([
-                'isValid' => false,
-                'message' => 'Token invalid'
-            ], 401);
-        }
-
-        if (!$user->is_login) {
-            $user->tokens()->where('id', $token->id)->delete();
+        try {
+            $user = $request->user();
             
-            return response()->json([
-                'isValid' => false,
-                'message' => 'Session expired'
-            ], 401);
-        }
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'is_valid' => false,
+                    'message' => 'Sesi tidak valid'
+                ], 401);
+            }
 
-        return response()->json([
-            'isValid' => true,
-            'user' => $user->only(['id', 'name', 'email', 'roles']),
-            'lastActivity' => $token->last_used_at
-        ]);
+            return response()->json([
+                'status' => true,
+                'is_valid' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => $user->roles->pluck('name'),
+                    'is_login' => $user->is_login,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Session check failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'is_valid' => false,
+                'message' => 'Terjadi kesalahan saat memeriksa sesi'
+            ], 500);
+        }
     }
 
     /**
@@ -396,13 +441,28 @@ class AuthController extends Controller
      *     )
      * )
      */
-     public function forceLogout(Request $request)
+    public function forceLogout(Request $request)
     {
-        $user = $request->user();
-        $user->is_login = false;
-        $user->save();
-        $user->tokens()->delete();
-        
-        return response()->json(['message' => 'Logged out from all devices']);
+        try {
+            $user = $request->user();
+            
+            if ($user) {
+                $user->tokens()->delete();
+                $user->is_login = false;
+                $user->save();
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Logout dari semua perangkat berhasil'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Force logout failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat logout dari semua perangkat'
+            ], 500);
+        }
     }
 }
