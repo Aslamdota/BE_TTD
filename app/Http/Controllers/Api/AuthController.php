@@ -132,19 +132,31 @@ class AuthController extends Controller
      *     )
      * )
      */
-    public function login(Request $request)
-    {
+   public function login(Request $request)
+   {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
             'remember_me' => 'boolean'
         ]);
 
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && $user->is_login) {
+            return response()->json([
+                'message' => 'Anda sudah login di perangkat lain',
+                'already_logged_in' => true
+            ], 403);
+        }
+
         if (!Auth::attempt($credentials)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $user = $request->user();
+        
+        $user->tokens()->delete();
+        
         $user->is_login = true;
         $user->save();
 
@@ -192,14 +204,11 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
+        $user->is_login = false;
+        $user->save();
         
-        if ($user) {
-            $user->is_login = false;
-            $user->save();
-            
-            $request->user()->currentAccessToken()->delete();
-        }
-
+        $request->user()->currentAccessToken()->delete();
+        
         return response()->json(['message' => 'Successfully logged out']);
     }
 
