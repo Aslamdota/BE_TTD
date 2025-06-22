@@ -329,8 +329,10 @@ class AuthController extends Controller
     public function checkSession(Request $request)
     {
         try {
+            DB::connection()->reconnect();
+
             $user = $request->user();
-            
+
             if (!$user) {
                 return response()->json([
                     'status' => false,
@@ -350,7 +352,6 @@ class AuthController extends Controller
                     'is_login' => $user->is_login,
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('Session check failed', ['error' => $e->getMessage()]);
             return response()->json([
@@ -360,6 +361,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Get active session information
