@@ -329,7 +329,9 @@ class AuthController extends Controller
     public function checkSession(Request $request)
     {
         try {
-            DB::connection()->reconnect();
+            if (!DB::connection()->getPdo()) {
+                DB::reconnect();
+            }
 
             $user = $request->user();
 
@@ -352,8 +354,12 @@ class AuthController extends Controller
                     'is_login' => $user->is_login,
                 ]
             ]);
-        } catch (\Exception $e) {
-            Log::error('Session check failed', ['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            Log::error('Session check failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'status' => false,
                 'is_valid' => false,
@@ -361,6 +367,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
 
     /**
