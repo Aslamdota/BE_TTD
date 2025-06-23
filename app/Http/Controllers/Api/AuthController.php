@@ -141,7 +141,7 @@ class AuthController extends Controller
                 'email' => 'required|email',
                 'password' => 'required|string',
                 'remember_me' => 'sometimes|boolean',
-                'force_logout' => 'sometimes|boolean' // New parameter for force logout
+                'force_logout' => 'sometimes|boolean'
             ]);
 
             $user = User::with('roles')->where('email', $credentials['email'])->first();
@@ -156,7 +156,6 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            // Attempt authentication
             if (!Auth::attempt($request->only('email', 'password'))) {
                 throw ValidationException::withMessages([
                     'email' => [__('auth.failed')],
@@ -164,13 +163,17 @@ class AuthController extends Controller
             }
 
             $user = $request->user();
+
             if ($credentials['force_logout'] ?? false) {
                 $user->tokens()->delete();
+                Log::info('User force logged out from all devices.', ['user_id' => $user->id]);
             } else {
                 $user->currentAccessToken()?->delete();
+                Log::info('User\'s current access token revoked on new login.', ['user_id' => $user->id]);
             }
 
             $user->is_login = true;
+            $user->last_activity = now(); 
             $user->save();
 
             $token = $user->createToken('VirSign Access Token')->plainTextToken;
@@ -186,23 +189,30 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'roles' => $roles,
                     'is_login' => $user->is_login,
+                    'last_activity' => $user->last_activity, 
                 ]
             ]);
 
         } catch (ValidationException $e) {
-            Log::warning('Login validation failed', ['error' => $e->errors()]);
+            Log::warning('Login validation failed', ['error' => $e->errors(), 'email' => $request->email]);
             return response()->json([
                 'status' => false,
-                'message' => 'Validasi gagal',
+                'message' => 'Email atau password salah', 
                 'errors' => $e->errors(),
                 'already_logged_in' => false,
                 'is_blocked' => false
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Login failed', ['error' => $e->getMessage()]);
+            ], 401); 
+        } catch (\Throwable $e) { 
+            Log::error('Login failed due to system error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip(),
+                'email' => $request->email,
+            ]);
             return response()->json([
                 'status' => false,
-                'message' => 'Terjadi kesalahan saat login',
+                'message' => 'Terjadi kesalahan sistem saat login.',
+                'error_detail' => config('app.debug') ? $e->getMessage() : null, // Show detail in debug mode
                 'already_logged_in' => false,
                 'is_blocked' => false
             ], 500);
@@ -327,24 +337,23 @@ class AuthController extends Controller
      *     )
      * )
      */
-    public function checkSession(Request $request)
+     public function checkSession(Request $request)
     {
         try {
             try {
                 DB::connection()->getPdo();
             } catch (\Exception $e) {
-                Log::error('Database connection error', ['error' => $e->getMessage()]);
+                Log::error('Database connection error in checkSession', ['error' => $e->getMessage()]);
                 DB::reconnect();
-                
                 if (!DB::connection()->getPdo()) {
-                    throw new \Exception('Failed to reconnect to database');
+                    throw new \Exception('Failed to reconnect to database for session check');
                 }
             }
 
-            $user = $request->user();
+            $user = $request->user(); 
 
             if (!$user) {
-                Log::warning('Invalid session - no user found');
+                Log::warning('Invalid session - no user found (token expired or invalid)');
                 return response()->json([
                     'status' => false,
                     'is_valid' => false,
@@ -353,7 +362,7 @@ class AuthController extends Controller
             }
 
             if (!$user->is_login) {
-                Log::warning('User session not active', ['user_id' => $user->id]);
+                Log::warning('User session not active (is_login flag is false)', ['user_id' => $user->id]);
                 return response()->json([
                     'status' => false,
                     'is_valid' => false,
@@ -378,7 +387,7 @@ class AuthController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-            Log::error('Session check failed', [
+            Log::error('Session check failed due to system error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'ip' => $request->ip(),
@@ -493,6 +502,51 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Terjadi kesalahan saat logout dari semua perangkat'
+            ], 500);
+        }
+    }
+
+    public function refreshToken(Request $request)
+    {
+        try {
+            $user = $request->user(); 
+
+            if (!$user) {
+                Log::warning('Refresh token attempt without authenticated user.');
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Tidak ada sesi aktif untuk memperbarui token.',
+                    'code' => 'NO_ACTIVE_SESSION' 
+                ], 401);
+            }
+
+            $request->user()->currentAccessToken()->delete(); 
+            Log::info('Old access token revoked for user during refresh.', ['user_id' => $user->id]);
+
+            $newAccessToken = $user->createToken('VirSign Access Token')->plainTextToken;
+
+            Log::info('New access token issued.', ['user_id' => $user->id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Token berhasil diperbarui.',
+                'access_token' => $newAccessToken,
+                'refresh_token' => $newAccessToken, 
+                'token_type' => 'Bearer',
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('Sanctum refresh token failed due to system error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id() ?? 'N/A',
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan sistem saat memperbarui token.',
+                'error_detail' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
