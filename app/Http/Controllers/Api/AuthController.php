@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 /**
  * @OA\Info(
  *     title="VirSign API Documentation",
