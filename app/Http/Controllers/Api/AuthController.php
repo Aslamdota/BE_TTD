@@ -329,19 +329,39 @@ class AuthController extends Controller
     public function checkSession(Request $request)
     {
         try {
-            if (!DB::connection()->getPdo()) {
+            try {
+                DB::connection()->getPdo();
+            } catch (\Exception $e) {
+                Log::error('Database connection error', ['error' => $e->getMessage()]);
                 DB::reconnect();
+                
+                if (!DB::connection()->getPdo()) {
+                    throw new \Exception('Failed to reconnect to database');
+                }
             }
 
             $user = $request->user();
 
             if (!$user) {
+                Log::warning('Invalid session - no user found');
                 return response()->json([
                     'status' => false,
                     'is_valid' => false,
-                    'message' => 'Sesi tidak valid'
+                    'message' => 'Sesi tidak valid atau telah kadaluarsa'
                 ], 401);
             }
+
+            if (!$user->is_login) {
+                Log::warning('User session not active', ['user_id' => $user->id]);
+                return response()->json([
+                    'status' => false,
+                    'is_valid' => false,
+                    'message' => 'Sesi tidak aktif'
+                ], 401);
+            }
+
+            $user->last_activity = now();
+            $user->save();
 
             return response()->json([
                 'status' => true,
@@ -352,24 +372,26 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'roles' => $user->roles->pluck('name'),
                     'is_login' => $user->is_login,
+                    'last_activity' => $user->last_activity
                 ]
             ]);
+
         } catch (\Throwable $e) {
             Log::error('Session check failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
             ]);
 
             return response()->json([
                 'status' => false,
                 'is_valid' => false,
-                'message' => 'Terjadi kesalahan saat memeriksa sesi'
+                'message' => 'Terjadi kesalahan sistem saat memeriksa sesi',
+                'error_detail' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
-
-
-
     /**
      * Get active session information
      * 
@@ -421,7 +443,6 @@ class AuthController extends Controller
 
     protected function getLocationFromIp($ip)
     {
-        // In production, you might want to use a proper IP geolocation service
         return $ip === '127.0.0.1' ? 'Localhost' : 'Unknown';
     }
 
