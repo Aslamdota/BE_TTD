@@ -782,4 +782,18 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Menu deleted successfully']);
     }
+
+    public function importDosen(Request $request)
+{
+    $request->validate([
+        'file' => 'required|file|mimes:xlsx,xls'
+    ]);
+
+    try {
+        Excel::import(new DosenImport, $request->file('file'));
+        return response()->json(['message' => 'Import dosen berhasil'], 200);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Import gagal', 'error' => $e->getMessage()], 500);
+    }
+}
 }
