@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Imports\DosenImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * @OA\Tag(
