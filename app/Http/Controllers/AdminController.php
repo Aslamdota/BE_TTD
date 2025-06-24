@@ -783,17 +783,54 @@ class AdminController extends Controller
         return response()->json(['message' => 'Menu deleted successfully']);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/import-dosen",
+     *     tags={"Admin"},
+     *     summary="Import dosen via Excel",
+     *     operationId="importDosen",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"file"},
+     *                 @OA\Property(
+     *                     property="file",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="File Excel (.xlsx/.xls) dengan kolom: name, email, nip, password"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Import dosen berhasil",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string"))
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Import gagal"
+     *     )
+     * )
+     */
     public function importDosen(Request $request)
-{
-    $request->validate([
-        'file' => 'required|file|mimes:xlsx,xls'
-    ]);
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
 
-    try {
-        Excel::import(new DosenImport, $request->file('file'));
-        return response()->json(['message' => 'Import dosen berhasil'], 200);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'Import gagal', 'error' => $e->getMessage()], 500);
+        try {
+            Excel::import(new DosenImport, $request->file('file'));
+            return response()->json(['message' => 'Import dosen berhasil'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Import gagal', 'error' => $e->getMessage()], 500);
+        }
     }
-}
 }
