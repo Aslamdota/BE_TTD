@@ -26,7 +26,7 @@ Route::post('/verify', [DocumentController::class, 'verify']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    // Auth     
+    // Auth
     Route::get('/check-session', [AuthController::class, 'checkSession']);
     Route::get('/active-session', [AuthController::class, 'activeSession']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -69,4 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/menus/{menuId}', [AdminController::class, 'updateMenu']);
         Route::delete('/menus/{menuId}', [AdminController::class, 'deleteMenu']);
     });
+
+    Route::middleware(['auth:sanctum', 'can:admin'])->post('/admin/import-dosen', [AdminController::class, 'importDosen']);
 });
