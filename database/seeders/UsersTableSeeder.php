@@ -9,7 +9,7 @@ class UsersTableSeeder extends Seeder
 {
     public function run()
     {
-        if (!User::where('email', 'admin@iwu.com')->exists()) {
+        if (!User::where('email', 'admin@iwu.ad.id')->exists()) {
             $admin = User::create([
                 'name' => 'Admin',
                 'email' => 'admin@iwu.ad.id',
