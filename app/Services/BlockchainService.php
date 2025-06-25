@@ -38,7 +38,7 @@ class BlockchainService
     public function verifyDocumentHash(string $docHash): array
     {
         try {
-            $isValid = strlen($docHash) === 64;
+            $isValid = strlen($docHash) === 32;
             return [
                 'success' => true,
                 'is_valid' => $isValid,
