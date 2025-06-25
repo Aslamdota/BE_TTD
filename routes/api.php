@@ -41,10 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/pending', [DocumentController::class, 'pendingSignatures']);
     Route::get('/test', [ApiKeyController::class, 'test']);
 
-    // Blockchain
-    Route::post('/blockchain/store', [BlockchainController::class, 'storeHash']);
-    Route::post('/blockchain/verify', [BlockchainController::class, 'verifyHash']);
-
     // Admin routes
     Route::prefix('admin')->middleware('can:admin')->group(function () {
         // User management
@@ -71,4 +67,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware(['auth:sanctum', 'can:admin'])->post('/admin/import-dosen', [AdminController::class, 'importDosen']);
+
+    // Blockchain
+    Route::post('/blockchain/store', [BlockchainController::class, 'storeHash']);
+    Route::post('/blockchain/verify', [BlockchainController::class, 'verifyHash']);
+
 });
