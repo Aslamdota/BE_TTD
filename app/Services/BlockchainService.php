@@ -38,16 +38,21 @@ class BlockchainService
     public function verifyDocumentHash(string $docHash): array
     {
         try {
-            $isValid = strlen($docHash) === 32;
+            $isValid = preg_match('/^0x[a-fA-F0-9]{64}$/', $docHash) === 1;
+
             return [
                 'success' => true,
                 'is_valid' => $isValid,
                 'timestamp' => now()->toIso8601String(),
-                'signer' => '0x1234567890abcdef'
+                'signer' => $isValid ? '0x1234567890abcdef' : null,
             ];
         } catch (\Exception $e) {
-            Log::error('Blockchain verify error: '.$e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
+            Log::error('Blockchain verify error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
         }
     }
 }
