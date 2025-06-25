@@ -27,7 +27,7 @@ class AuthController extends Controller
 {
     /**
      * Register a new user
-     * 
+     *
      * @OA\Post(
      *     path="/api/register",
      *     tags={"Auth"},
@@ -95,7 +95,7 @@ class AuthController extends Controller
 
     /**
      * Authenticate user and create token
-     * 
+     *
      * @OA\Post(
      *     path="/api/login",
      *     tags={"Auth"},
@@ -201,7 +201,7 @@ class AuthController extends Controller
                 'ip' => $request->ip(),
                 'email' => $request->email
             ]);
-            
+
             return response()->json([
                 'status' => false,
                 'message' => 'Terjadi kesalahan sistem',
@@ -210,9 +210,10 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    
     /**
      * Logout user (revoke token)
-     * 
+     *
      * @OA\Post(
      *     path="/api/logout",
      *     tags={"Auth"},
@@ -239,7 +240,7 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
-            
+
             if ($user) {
                 $user->currentAccessToken()?->delete();
                 $user->is_login = false;
@@ -262,7 +263,7 @@ class AuthController extends Controller
 
     /**
      * Get authenticated user details
-     * 
+     *
      * @OA\Get(
      *     path="/api/user",
      *     tags={"Auth"},
@@ -305,7 +306,7 @@ class AuthController extends Controller
 
     /**
      * Check session validity
-     * 
+     *
      * @OA\Get(
      *     path="/api/check-session",
      *     tags={"Auth"},
@@ -342,7 +343,7 @@ class AuthController extends Controller
                 }
             }
 
-            $user = $request->user(); 
+            $user = $request->user();
 
             if (!$user) {
                 Log::warning('Invalid session - no user found (token expired or invalid)');
@@ -396,7 +397,7 @@ class AuthController extends Controller
     }
     /**
      * Get active session information
-     * 
+     *
      * @OA\Get(
      *     path="/api/active-session",
      *     tags={"Auth"},
@@ -425,7 +426,7 @@ class AuthController extends Controller
     public function activeSession(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
@@ -450,7 +451,7 @@ class AuthController extends Controller
 
     /**
      * Force logout from all devices
-     * 
+     *
      * @OA\Post(
      *     path="/api/force-logout",
      *     tags={"Auth"},
@@ -477,7 +478,7 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
-            
+
             if ($user) {
                 $user->tokens()->delete();
                 $user->is_login = false;
@@ -531,13 +532,13 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
                 'expires_in' => config('sanctum.expiration') * 60
             ]);
-            
+
         } catch (\Throwable $e) {
             Log::error('Token refresh failed', [
                 'user_id' => $request->user()?->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal memperbarui token',

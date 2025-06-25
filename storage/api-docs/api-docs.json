@@ -894,6 +894,63 @@
                 ]
             }
         },
+        "/api/admin/import-dosen": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Import dosen via Excel",
+                "operationId": "importDosen",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "File Excel (.xlsx/.xls) dengan kolom: name, email, nip, password",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Import dosen berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Import gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/keys/generate": {
             "post": {
                 "tags": [
@@ -1276,7 +1333,7 @@
                 ]
             }
         },
-        "/api/auth/check-session": {
+        "/api/check-session": {
             "get": {
                 "tags": [
                     "Auth"
@@ -1329,7 +1386,7 @@
                 ]
             }
         },
-        "/api/auth/active-session": {
+        "/api/active-session": {
             "get": {
                 "tags": [
                     "Auth"
@@ -1391,7 +1448,7 @@
                 ]
             }
         },
-        "/api/auth/force-logout": {
+        "/api/force-logout": {
             "post": {
                 "tags": [
                     "Auth"
