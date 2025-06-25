@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Web3\Web3;
-use Web3\Providers\HttpProvider;
-use Web3\RequestManagers\HttpRequestManager;
-use Web3\Contract;
+use App\Services\BlockchainService;
 
 /**
  * @OA\Tag(
@@ -16,6 +13,13 @@ use Web3\Contract;
  */
 class BlockchainController extends Controller
 {
+    protected $blockchain;
+
+    public function __construct(BlockchainService $blockchain)
+    {
+        $this->blockchain = $blockchain;
+    }
+
     /**
      * @OA\Post(
      *     path="/api/blockchain/store",
@@ -52,7 +56,25 @@ class BlockchainController extends Controller
      */
     public function storeHash(Request $request)
     {
-        // Implementasi method storeHash seperti sebelumnya
+        $request->validate([
+            'document_hash' => 'required|string',
+            'signature_hash' => 'required|string'
+        ]);
+
+        $result = $this->blockchain->storeDocumentHash($request->document_hash, $request->signature_hash);
+
+        if ($result['success']) {
+            return response()->json([
+                'message' => 'Hash stored in blockchain',
+                'tx_hash' => $result['tx_hash'],
+                'document_hash' => $request->document_hash
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Blockchain error',
+                'error' => $result['error']
+            ], 500);
+        }
     }
 
     /**
@@ -89,18 +111,19 @@ class BlockchainController extends Controller
             'document_hash' => 'required|string'
         ]);
 
-        $documentHash = $request->document_hash;
+        $result = $this->blockchain->verifyDocumentHash($request->document_hash);
 
-        $this->contract->call('verifyHash', $documentHash, function ($err, $result) {
-            if ($err !== null) {
-                return response()->json(['error' => $err->getMessage()], 500);
-            }
-
+        if ($result['success']) {
             return response()->json([
-                'is_valid' => $result[0],
-                'timestamp' => $result[1],
-                'signer' => $result[2]
+                'is_valid' => $result['is_valid'],
+                'timestamp' => $result['timestamp'],
+                'signer' => $result['signer']
             ]);
-        });
+        } else {
+            return response()->json([
+                'message' => 'Blockchain error',
+                'error' => $result['error']
+            ], 500);
+        }
     }
 }
