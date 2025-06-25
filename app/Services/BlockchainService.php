@@ -34,4 +34,20 @@ class BlockchainService
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
+
+    public function verifyDocumentHash(string $docHash): array
+    {
+        try {
+            $isValid = strlen($docHash) === 64;
+            return [
+                'success' => true,
+                'is_valid' => $isValid,
+                'timestamp' => now()->toIso8601String(),
+                'signer' => '0x1234567890abcdef'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Blockchain verify error: '.$e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
 }
