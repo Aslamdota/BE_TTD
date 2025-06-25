@@ -86,8 +86,10 @@ class BlockchainController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"document_hash"},
-     *             @OA\Property(property="document_hash", type="string", example="a1b2c3...")
+     *             required={"document_hash", "signer", "timestamp"},
+     *             @OA\Property(property="document_hash", type="string", example="0xe633e584a79873596fcfa93910aa87a1326a8cb1c5af9079e21a852aaa29cf8a"),
+     *             @OA\Property(property="signer", type="string", example="0x1234567890abcdef1234567890abcdef12345678"),
+     *             @OA\Property(property="timestamp", type="integer", example=1729932384)
      *         )
      *     ),
      *     @OA\Response(
@@ -96,8 +98,12 @@ class BlockchainController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="is_valid", type="boolean", example=true),
      *             @OA\Property(property="timestamp", type="string", format="date-time"),
-     *             @OA\Property(property="signer", type="string", example="0x123...")
+     *             @OA\Property(property="signer", type="string", example="0x1234567890abcdef1234567890abcdef12345678")
      *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
      *     ),
      *     @OA\Response(
      *         response=500,
@@ -107,11 +113,17 @@ class BlockchainController extends Controller
      */
     public function verifyHash(Request $request)
     {
-        $request->validate([
-            'document_hash' => 'required|string'
+        $validated = $request->validate([
+            'document_hash' => ['required', 'regex:/^0x[a-fA-F0-9]{64}$/'],
+            'signer' => ['required', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'timestamp' => ['required', 'numeric'],
         ]);
 
-        $result = $this->blockchain->verifyDocumentHash($request->document_hash);
+        $result = $this->blockchain->verifyDocumentHash(
+            $validated['document_hash'],
+            $validated['signer'],
+            $validated['timestamp']
+        );
 
         if ($result['success']) {
             return response()->json([
@@ -119,11 +131,11 @@ class BlockchainController extends Controller
                 'timestamp' => $result['timestamp'],
                 'signer' => $result['signer']
             ]);
-        } else {
-            return response()->json([
-                'message' => 'Blockchain error',
-                'error' => $result['error']
-            ], 500);
         }
+
+        return response()->json([
+            'message' => 'Blockchain error',
+            'error' => $result['error']
+        ], 500);
     }
 }
