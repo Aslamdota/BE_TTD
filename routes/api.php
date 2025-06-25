@@ -23,6 +23,8 @@ use App\Http\Controllers\Api\ApiKeyController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify', [DocumentController::class, 'verify']);
+
+// Blockchain
 Route::post('/blockchain/verify', [BlockchainController::class, 'verifyHash']);
 
 // Protected routes
