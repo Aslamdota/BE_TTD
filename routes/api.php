@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\ApiKeyController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify', [DocumentController::class, 'verify']);
+Route::post('/blockchain/verify', [BlockchainController::class, 'verifyHash']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -70,6 +71,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Blockchain
     Route::post('/blockchain/store', [BlockchainController::class, 'storeHash']);
-    Route::post('/blockchain/verify', [BlockchainController::class, 'verifyHash']);
 
 });
