@@ -12,8 +12,8 @@ class UsersTableSeeder extends Seeder
         if (!User::where('email', 'admin@iwu.com')->exists()) {
             $admin = User::create([
                 'name' => 'Admin',
-                'email' => 'admin@iwu.com',
-                'password' => Hash::make('password123'),
+                'email' => 'admin@iwu.ad.id',
+                'password' => Hash::make('iwupaskal#5'),
                 'nip' => '1234567890'
             ]);
 
