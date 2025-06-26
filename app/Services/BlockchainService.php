@@ -51,6 +51,7 @@ class BlockchainService
 
             return [
                 'success' => true,
+                'exists' => $isValid,
                 'is_valid' => $isValid,
                 'timestamp' => gmdate('c', $timestamp),
                 'expires_at' => gmdate('c', $expiresAt),
@@ -76,6 +77,7 @@ class BlockchainService
         }
     }
 
+
     public function verifySignatureHash(
         string $signHash, 
         string $signer, 
@@ -92,6 +94,7 @@ class BlockchainService
 
             return [
                 'success' => true,
+                'exists' => $isValid,
                 'is_valid' => $isValid,
                 'timestamp' => gmdate('c', $timestamp),
                 'expires_at' => gmdate('c', $expiresAt),
