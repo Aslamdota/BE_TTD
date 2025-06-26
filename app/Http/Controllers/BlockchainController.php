@@ -111,30 +111,66 @@ class BlockchainController extends Controller
      *     )
      * )
      */
-    public function verifyHash(Request $request)
+    public function verifyDocumentHash(Request $request)
     {
         $validated = $request->validate([
             'document_hash' => ['required', 'regex:/^0x[a-fA-F0-9]{64}$/'],
             'signer' => ['required', 'regex:/^0x[a-fA-F0-9]{40}$/'],
             'timestamp' => ['required', 'numeric'],
+            'expires_at' => ['required', 'numeric']
         ]);
 
         $result = $this->blockchain->verifyDocumentHash(
             $validated['document_hash'],
             $validated['signer'],
-            $validated['timestamp']
+            $validated['timestamp'],
+            $validated['expires_at']
         );
 
         if ($result['success']) {
             return response()->json([
                 'is_valid' => $result['is_valid'],
                 'timestamp' => $result['timestamp'],
-                'signer' => $result['signer']
+                'expires_at' => $result['expires_at'],
+                'signer' => $result['signer'],
+                'validation_details' => $result['validation_details'] ?? null
             ]);
         }
 
         return response()->json([
-            'message' => 'Blockchain error',
+            'message' => 'Document verification error',
+            'error' => $result['error']
+        ], 500);
+    }
+
+    public function verifySignatureHash(Request $request)
+    {
+        $validated = $request->validate([
+            'signature_hash' => ['required', 'regex:/^0x[a-fA-F0-9]{64}$/'],
+            'signer' => ['required', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'timestamp' => ['required', 'numeric'],
+            'expires_at' => ['required', 'numeric']
+        ]);
+
+        $result = $this->blockchain->verifySignatureHash(
+            $validated['signature_hash'],
+            $validated['signer'],
+            $validated['timestamp'],
+            $validated['expires_at']
+        );
+
+        if ($result['success']) {
+            return response()->json([
+                'is_valid' => $result['is_valid'],
+                'timestamp' => $result['timestamp'],
+                'expires_at' => $result['expires_at'],
+                'signer' => $result['signer'],
+                'validation_details' => $result['validation_details'] ?? null
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Signature verification error',
             'error' => $result['error']
         ], 500);
     }
