@@ -25,7 +25,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify', [DocumentController::class, 'verify']);
 
 // Blockchain
-Route::post('/blockchain/verify', [BlockchainController::class, 'verifyHash']);
+Route::post('/blockchain/verify', [BlockchainController::class, 'verifyDocumentHash']);
 Route::post('/blockchain/verify-signature', [BlockchainController::class, 'verifySignatureHash']);
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
