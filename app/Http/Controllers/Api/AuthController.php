@@ -12,60 +12,65 @@ use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+
 /**
  * @OA\Info(
- *     title="VirSign API Documentation",
- *     version="1.0"
+ * title="VirSign API Documentation",
+ * version="1.0"
  * )
  *
  * @OA\Server(
- *     url="https://bettd-production.up.railway.app/",
- *     description="Production API Server"
+ * url="https://bettd-production.up.railway.app/",
+ * description="Production API Server"
  * )
  */
 class AuthController extends Controller
 {
+    // Constants for login attempt limiting
+    const MAX_LOGIN_ATTEMPTS = 3;
+    const BLOCK_DURATION_MINUTES = 30;
+
     /**
      * Register a new user
      *
      * @OA\Post(
-     *     path="/api/register",
-     *     tags={"Auth"},
-     *     summary="Register a new user",
-     *     operationId="register",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name","email","password"},
-     *             @OA\Property(property="name", type="string", example="John Doe"),
-     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password123"),
-     *             @OA\Property(property="nip", type="string", example="1234567890")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="User registered successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="User registered successfully"),
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="John Doe"),
-     *                 @OA\Property(property="email", type="string", example="john@example.com"),
-     *                 @OA\Property(property="nip", type="string", example="1234567890"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
-     *             @OA\Property(property="errors", type="object")
-     *         )
-     *     )
+     * path="/api/register",
+     * tags={"Auth"},
+     * summary="Register a new user",
+     * operationId="register",
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"name","email","password"},
+     * @OA\Property(property="name", type="string", example="John Doe"),
+     * @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     * @OA\Property(property="password", type="string", format="password", example="password123"),
+     * @OA\Property(property="nip", type="string", example="1234567890")
+     * )
+     * ),
+     * @OA\Response(
+     * response=201,
+     * description="User registered successfully",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="User registered successfully"),
+     * @OA\Property(property="user", type="object",
+     * @OA\Property(property="id", type="integer", example=1),
+     * @OA\Property(property="name", type="string", example="John Doe"),
+     * @OA\Property(property="email", type="string", example="john@example.com"),
+     * @OA\Property(property="nip", type="string", example="1234567890"),
+     * @OA\Property(property="updated_at", type="string", format="date-time"),
+     * @OA\Property(property="created_at", type="string", format="date-time")
+     * )
+     * )
+     * ),
+     * @OA\Response(
+     * response=422,
+     * description="Validation error",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="The given data was invalid."),
+     * @OA\Property(property="errors", type="object")
+     * )
+     * )
      * )
      */
     public function register(Request $request)
@@ -82,7 +87,9 @@ class AuthController extends Controller
             'email' => $request->email,
             'nip' => $request->nip,
             'password' => Hash::make($request->password),
-            'is_login' => false
+            'is_login' => false,
+            'failed_login_attempts' => 0,
+            'blocked_until' => null
         ]);
 
         $user->generateKeyPair();
@@ -97,41 +104,69 @@ class AuthController extends Controller
      * Authenticate user and create token
      *
      * @OA\Post(
-     *     path="/api/login",
-     *     tags={"Auth"},
-     *     summary="Login user",
-     *     operationId="login",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"email","password"},
-     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password123"),
-     *             @OA\Property(property="remember_me", type="boolean", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Login successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="access_token", type="string", example="1|abcdefghijklmnopqrstuvwxyz"),
-     *             @OA\Property(property="token_type", type="string", example="Bearer"),
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="John Doe"),
-     *                 @OA\Property(property="email", type="string", example="john@example.com"),
-     *                 @OA\Property(property="roles", type="array", @OA\Items(type="string")),
-     *                 @OA\Property(property="is_login", type="boolean", example=true)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthorized")
-     *         )
-     *     )
+     * path="/api/login",
+     * tags={"Auth"},
+     * summary="Login user",
+     * operationId="login",
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"email","password"},
+     * @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     * @OA\Property(property="password", type="string", format="password", example="password123"),
+     * @OA\Property(property="force_logout", type="boolean", example=false, description="Set to true to force logout from other devices and login to this one.")
+     * )
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Login successful",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=true),
+     * @OA\Property(property="access_token", type="string", example="1|abcdefghijklmnopqrstuvwxyz"),
+     * @OA\Property(property="refresh_token", type="string", example="2|zyxwuvtsrqponmlkjihgfedcba"),
+     * @OA\Property(property="token_type", type="string", example="Bearer"),
+     * @OA\Property(property="expires_in", type="integer", example=3600, description="Token expiration in seconds"),
+     * @OA\Property(property="user", type="object",
+     * @OA\Property(property="id", type="integer", example=1),
+     * @OA\Property(property="name", type="string", example="John Doe"),
+     * @OA\Property(property="email", type="string", example="john@example.com"),
+     * @OA\Property(property="roles", type="array", @OA\Items(type="string")),
+     * @OA\Property(property="is_login", type="boolean", example=true),
+     * @OA\Property(property="last_activity", type="string", format="date-time")
+     * )
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthorized / Invalid Credentials / Blocked",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Email atau password salah"),
+     * @OA\Property(property="code", type="string", example="AUTH_FAILED"),
+     * @OA\Property(property="remaining_attempts", type="integer", example=2, nullable=true, description="Remaining attempts before account is blocked"),
+     * @OA\Property(property="is_blocked", type="boolean", example=false, description="True if account is currently blocked"),
+     * @OA\Property(property="blocked_until", type="string", format="date-time", nullable=true, description="Timestamp when account block expires")
+     * )
+     * ),
+     * @OA\Response(
+     * response=403,
+     * description="Forbidden / Already Logged In",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Anda sudah login di perangkat lain"),
+     * @OA\Property(property="code", type="string", example="ALREADY_LOGGED_IN"),
+     * @OA\Property(property="already_logged_in", type="boolean", example=true, description="True if user is already logged in on another device")
+     * )
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server Error",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem"),
+     * @OA\Property(property="code", type="string", example="SERVER_ERROR")
+     * )
+     * )
      * )
      */
     public function login(Request $request)
@@ -140,13 +175,34 @@ class AuthController extends Controller
             $credentials = $request->validate([
                 'email' => 'required|email',
                 'password' => 'required|string',
-                'remember_me' => 'sometimes|boolean',
                 'force_logout' => 'sometimes|boolean'
             ]);
 
             $user = User::with('roles')->where('email', $credentials['email'])->first();
+            $forceLogout = $credentials['force_logout'] ?? false;
 
-            if ($user && $user->is_login && !($credentials['force_logout'] ?? false)) {
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email atau password salah',
+                    'code' => 'AUTH_FAILED'
+                ], 401);
+            }
+
+            if ($user->blocked_until && Carbon::now()->lessThan($user->blocked_until)) {
+                $remainingMinutes = ceil(Carbon::now()->diffInSeconds($user->blocked_until) / 60);
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Akun Anda terkunci sementara. Coba lagi dalam ' . $remainingMinutes . ' menit.',
+                    'code' => 'ACCOUNT_BLOCKED',
+                    'is_blocked' => true,
+                    'blocked_until' => Carbon::parse($user->blocked_until)->toIso8601String(),
+                    'remaining_minutes' => $remainingMinutes
+                ], 403);
+            }
+
+            if ($user->is_login && !$forceLogout) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Anda sudah login di perangkat lain',
@@ -156,16 +212,37 @@ class AuthController extends Controller
             }
 
             if (!Auth::attempt($request->only('email', 'password'))) {
+                $user->increment('failed_login_attempts');
+                $remainingAttempts = self::MAX_LOGIN_ATTEMPTS - $user->failed_login_attempts;
+
+                if ($user->failed_login_attempts >= self::MAX_LOGIN_ATTEMPTS) {
+                    $user->blocked_until = Carbon::now()->addMinutes(self::BLOCK_DURATION_MINUTES);
+                    $user->save();
+
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Terlalu banyak percobaan login. Akun terkunci sementara. Coba lagi dalam ' . self::BLOCK_DURATION_MINUTES . ' menit.',
+                        'code' => 'TOO_MANY_ATTEMPTS',
+                        'is_blocked' => true,
+                        'blocked_until' => $user->blocked_until->toIso8601String(),
+                        'remaining_minutes' => self::BLOCK_DURATION_MINUTES
+                    ], 401);
+                }
+
+                $user->save();
+
                 return response()->json([
                     'status' => false,
                     'message' => 'Email atau password salah',
-                    'code' => 'AUTH_FAILED'
+                    'code' => 'AUTH_FAILED',
+                    'remaining_attempts' => max(0, $remainingAttempts)
                 ], 401);
             }
 
-            $user = $request->user();
+            $user->failed_login_attempts = 0;
+            $user->blocked_until = null;
 
-            if ($credentials['force_logout'] ?? false) {
+            if ($forceLogout) {
                 $user->tokens()->delete();
             } else {
                 $user->currentAccessToken()?->delete();
@@ -183,7 +260,7 @@ class AuthController extends Controller
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
                 'token_type' => 'Bearer',
-                'expires_in' => config('sanctum.expiration') * 60, // in seconds
+                'expires_in' => config('sanctum.expiration') * 60,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -193,7 +270,13 @@ class AuthController extends Controller
                     'last_activity' => $user->last_activity
                 ]
             ]);
-
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'code' => 'VALIDATION_ERROR',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('Login failed', [
                 'error' => $e->getMessage(),
@@ -210,30 +293,40 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    
+
+
     /**
      * Logout user (revoke token)
      *
      * @OA\Post(
-     *     path="/api/logout",
-     *     tags={"Auth"},
-     *     summary="Logout user",
-     *     operationId="logout",
-     *     security={{"sanctum":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successfully logged out",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Successfully logged out")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
-     *     )
+     * path="/api/logout",
+     * tags={"Auth"},
+     * summary="Logout user",
+     * operationId="logout",
+     * security={{"sanctum":{}}},
+     * @OA\Response(
+     * response=200,
+     * description="Successfully logged out",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Logout berhasil")
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthenticated",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Unauthenticated")
+     * )
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server Error",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Terjadi kesalahan saat logout")
+     * )
+     * )
      * )
      */
     public function logout(Request $request)
@@ -265,30 +358,30 @@ class AuthController extends Controller
      * Get authenticated user details
      *
      * @OA\Get(
-     *     path="/api/user",
-     *     tags={"Auth"},
-     *     summary="Get authenticated user details",
-     *     operationId="getUser",
-     *     security={{"sanctum":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="User details",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="John Doe"),
-     *             @OA\Property(property="email", type="string", example="john@example.com"),
-     *             @OA\Property(property="nip", type="string", example="1234567890"),
-     *             @OA\Property(property="is_login", type="boolean", example=true),
-     *             @OA\Property(property="roles", type="array", @OA\Items(type="string"))
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
-     *     )
+     * path="/api/user",
+     * tags={"Auth"},
+     * summary="Get authenticated user details",
+     * operationId="getUser",
+     * security={{"sanctum":{}}},
+     * @OA\Response(
+     * response=200,
+     * description="User details",
+     * @OA\JsonContent(
+     * @OA\Property(property="id", type="integer", example=1),
+     * @OA\Property(property="name", type="string", example="John Doe"),
+     * @OA\Property(property="email", type="string", example="john@example.com"),
+     * @OA\Property(property="nip", type="string", example="1234567890"),
+     * @OA\Property(property="is_login", type="boolean", example=true),
+     * @OA\Property(property="roles", type="array", @OA\Items(type="string"))
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthenticated",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Unauthenticated")
+     * )
+     * )
      * )
      */
     public function user(Request $request)
@@ -308,29 +401,51 @@ class AuthController extends Controller
      * Check session validity
      *
      * @OA\Get(
-     *     path="/api/check-session",
-     *     tags={"Auth"},
-     *     summary="Check session validity",
-     *     operationId="checkSession",
-     *     security={{"sanctum":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Session is valid",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="isValid", type="boolean", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="isValid", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Session expired")
-     *         )
-     *     )
+     * path="/api/check-session",
+     * tags={"Auth"},
+     * summary="Check session validity",
+     * operationId="checkSession",
+     * security={{"sanctum":{}}},
+     * @OA\Response(
+     * response=200,
+     * description="Session is valid",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=true),
+     * @OA\Property(property="is_valid", type="boolean", example=true),
+     * @OA\Property(property="user", type="object",
+     * @OA\Property(property="id", type="integer", example=1),
+     * @OA\Property(property="name", type="string", example="John Doe"),
+     * @OA\Property(property="email", type="string", example="john@example.com"),
+     * @OA\Property(property="roles", type="array", @OA\Items(type="string")),
+     * @OA\Property(property="is_login", type="boolean", example=true),
+     * @OA\Property(property="last_activity", type="string", format="date-time")
+     * )
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthenticated / Session invalid or expired",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="is_valid", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Sesi tidak valid atau telah kadaluarsa"),
+     * @OA\Property(property="code", type="string", example="SESSION_EXPIRED", nullable=true),
+     * @OA\Property(property="is_blocked", type="boolean", example=false, nullable=true),
+     * @OA\Property(property="blocked_until", type="string", format="date-time", nullable=true)
+     * )
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server Error",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="is_valid", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem saat memeriksa sesi")
+     * )
+     * )
      * )
      */
-     public function checkSession(Request $request)
+    public function checkSession(Request $request)
     {
         try {
             try {
@@ -350,8 +465,20 @@ class AuthController extends Controller
                 return response()->json([
                     'status' => false,
                     'is_valid' => false,
-                    'message' => 'Sesi tidak valid atau telah kadaluarsa'
+                    'message' => 'Sesi tidak valid atau telah kadaluarsa',
+                    'code' => 'SESSION_EXPIRED'
                 ], 401);
+            }
+
+            if ($user->blocked_until && Carbon::now()->lessThan($user->blocked_until)) {
+                return response()->json([
+                    'status' => false,
+                    'is_valid' => false,
+                    'message' => 'Akun Anda terkunci sementara.',
+                    'code' => 'ACCOUNT_BLOCKED',
+                    'is_blocked' => true,
+                    'blocked_until' => $user->blocked_until->toISOString()
+                ], 401); 
             }
 
             if (!$user->is_login) {
@@ -359,7 +486,8 @@ class AuthController extends Controller
                 return response()->json([
                     'status' => false,
                     'is_valid' => false,
-                    'message' => 'Sesi tidak aktif'
+                    'message' => 'Sesi tidak aktif',
+                    'code' => 'SESSION_INACTIVE'
                 ], 401);
             }
 
@@ -395,32 +523,35 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
     /**
      * Get active session information
      *
      * @OA\Get(
-     *     path="/api/active-session",
-     *     tags={"Auth"},
-     *     summary="Get active session information",
-     *     operationId="activeSession",
-     *     security={{"sanctum":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Active session information",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="hasActiveSession", type="boolean", example=true),
-     *             @OA\Property(property="lastActivity", type="string", format="date-time", nullable=true),
-     *             @OA\Property(property="device", type="string", example="Mozilla/5.0 (Windows NT 10.0)"),
-     *             @OA\Property(property="ip", type="string", example="127.0.0.1")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
-     *     )
+     * path="/api/active-session",
+     * tags={"Auth"},
+     * summary="Get active session information",
+     * operationId="activeSession",
+     * security={{"sanctum":{}}},
+     * @OA\Response(
+     * response=200,
+     * description="Active session information",
+     * @OA\JsonContent(
+     * @OA\Property(property="hasActiveSession", type="boolean", example=true),
+     * @OA\Property(property="lastActivity", type="string", format="date-time", nullable=true),
+     * @OA\Property(property="device", type="string", example="Mozilla/5.0 (Windows NT 10.0)"),
+     * @OA\Property(property="ip", type="string", example="127.0.0.1"),
+     * @OA\Property(property="location", type="string", example="Localhost"),
+     * @OA\Property(property="sessionCreatedAt", type="string", format="date-time")
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthenticated",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Unauthenticated")
+     * )
+     * )
      * )
      */
     public function activeSession(Request $request)
@@ -446,6 +577,7 @@ class AuthController extends Controller
 
     protected function getLocationFromIp($ip)
     {
+        // In a real application, you'd use a geolocation service here
         return $ip === '127.0.0.1' ? 'Localhost' : 'Unknown';
     }
 
@@ -453,25 +585,34 @@ class AuthController extends Controller
      * Force logout from all devices
      *
      * @OA\Post(
-     *     path="/api/force-logout",
-     *     tags={"Auth"},
-     *     summary="Force logout from all devices",
-     *     operationId="forceLogout",
-     *     security={{"sanctum":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Logged out from all devices",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Logged out from all devices")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
-     *     )
+     * path="/api/force-logout",
+     * tags={"Auth"},
+     * summary="Force logout from all devices",
+     * operationId="forceLogout",
+     * security={{"sanctum":{}}},
+     * @OA\Response(
+     * response=200,
+     * description="Logged out from all devices",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Logout dari semua perangkat berhasil")
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthenticated",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Unauthenticated")
+     * )
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server Error",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Terjadi kesalahan saat logout dari semua perangkat")
+     * )
+     * )
      * )
      */
     public function forceLogout(Request $request)
@@ -499,6 +640,54 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * Refresh access token using refresh token
+     *
+     * @OA\Post(
+     * path="/api/refresh-token",
+     * tags={"Auth"},
+     * summary="Refresh access token",
+     * operationId="refreshToken",
+     * security={{"sanctum":{}}},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"refresh_token"},
+     * @OA\Property(property="refresh_token", type="string", example="2|zyxwuvtsrqponmlkjihgfedcba")
+     * )
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Token refreshed successfully",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=true),
+     * @OA\Property(property="access_token", type="string", example="1|newaccesstoken"),
+     * @OA\Property(property="refresh_token", type="string", example="2|newrefreshtoken"),
+     * @OA\Property(property="token_type", type="string", example="Bearer"),
+     * @OA\Property(property="expires_in", type="integer", example=3600)
+     * )
+     * ),
+     * @OA\Response(
+     * response=401,
+     * description="Unauthorized / Invalid Refresh Token",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Refresh token tidak valid"),
+     * @OA\Property(property="code", type="string", example="INVALID_REFRESH_TOKEN"),
+     * @OA\Property(property="is_blocked", type="boolean", example=false, nullable=true),
+     * @OA\Property(property="blocked_until", type="string", format="date-time", nullable=true)
+     * )
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server Error",
+     * @OA\JsonContent(
+     * @OA\Property(property="status", type="boolean", example=false),
+     * @OA\Property(property="message", type="string", example="Gagal memperbarui token")
+     * )
+     * )
+     * )
+     */
     public function refreshToken(Request $request)
     {
         try {
@@ -506,24 +695,39 @@ class AuthController extends Controller
                 'refresh_token' => 'required|string'
             ]);
 
-            $refreshToken = $request->user()->tokens()
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthenticated',
+                    'code' => 'UNAUTHENTICATED'
+                ], 401);
+            }
+
+            $refreshToken = $user->tokens()
+                ->where('name', 'VirSign Refresh Token') 
                 ->where('token', hash('sha256', $request->refresh_token))
-                ->where('abilities', '["refresh"]')
+                ->whereJsonContains('abilities', 'refresh')
                 ->first();
 
             if (!$refreshToken) {
+                $user->tokens()->delete();
+                $user->is_login = false;
+                $user->save();
+
                 return response()->json([
                     'status' => false,
-                    'message' => 'Refresh token tidak valid',
+                    'message' => 'Refresh token tidak valid atau telah digunakan',
                     'code' => 'INVALID_REFRESH_TOKEN'
                 ], 401);
             }
 
-            $request->user()->currentAccessToken()?->delete();
+            $user->currentAccessToken()?->delete();
             $refreshToken->delete();
 
-            $accessToken = $request->user()->createToken('VirSign Access Token')->plainTextToken;
-            $newRefreshToken = $request->user()->createToken('VirSign Refresh Token', ['refresh'])->plainTextToken;
+            $accessToken = $user->createToken('VirSign Access Token')->plainTextToken;
+            $newRefreshToken = $user->createToken('VirSign Refresh Token', ['refresh'])->plainTextToken;
 
             return response()->json([
                 'status' => true,
@@ -533,16 +737,25 @@ class AuthController extends Controller
                 'expires_in' => config('sanctum.expiration') * 60
             ]);
 
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal',
+                'code' => 'VALIDATION_ERROR',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Throwable $e) {
             Log::error('Token refresh failed', [
                 'user_id' => $request->user()?->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal memperbarui token',
-                'code' => 'REFRESH_FAILED'
+                'code' => 'REFRESH_FAILED',
+                'error_detail' => config('app.debug') ? $e->getMessage() : null
             ], 401);
         }
     }

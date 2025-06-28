@@ -1136,9 +1136,10 @@
                                         "format": "password",
                                         "example": "password123"
                                     },
-                                    "remember_me": {
+                                    "force_logout": {
+                                        "description": "Set to true to force logout from other devices and login to this one.",
                                         "type": "boolean",
-                                        "example": true
+                                        "example": false
                                     }
                                 },
                                 "type": "object"
@@ -1153,13 +1154,26 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "access_token": {
                                             "type": "string",
                                             "example": "1|abcdefghijklmnopqrstuvwxyz"
                                         },
+                                        "refresh_token": {
+                                            "type": "string",
+                                            "example": "2|zyxwuvtsrqponmlkjihgfedcba"
+                                        },
                                         "token_type": {
                                             "type": "string",
                                             "example": "Bearer"
+                                        },
+                                        "expires_in": {
+                                            "description": "Token expiration in seconds",
+                                            "type": "integer",
+                                            "example": 3600
                                         },
                                         "user": {
                                             "properties": {
@@ -1184,6 +1198,10 @@
                                                 "is_login": {
                                                     "type": "boolean",
                                                     "example": true
+                                                },
+                                                "last_activity": {
+                                                    "type": "string",
+                                                    "format": "date-time"
                                                 }
                                             },
                                             "type": "object"
@@ -1195,14 +1213,92 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized / Invalid Credentials / Blocked",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Unauthorized"
+                                            "example": "Email atau password salah"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "AUTH_FAILED"
+                                        },
+                                        "remaining_attempts": {
+                                            "description": "Remaining attempts before account is blocked",
+                                            "type": "integer",
+                                            "example": 2,
+                                            "nullable": true
+                                        },
+                                        "is_blocked": {
+                                            "description": "True if account is currently blocked",
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "blocked_until": {
+                                            "description": "Timestamp when account block expires",
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden / Already Logged In",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Anda sudah login di perangkat lain"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ALREADY_LOGGED_IN"
+                                        },
+                                        "already_logged_in": {
+                                            "description": "True if user is already logged in on another device",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "SERVER_ERROR"
                                         }
                                     },
                                     "type": "object"
@@ -1228,9 +1324,13 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Successfully logged out"
+                                            "example": "Logout berhasil"
                                         }
                                     },
                                     "type": "object"
@@ -1247,6 +1347,26 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat logout"
                                         }
                                     },
                                     "type": "object"
@@ -1348,9 +1468,44 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "isValid": {
+                                        "status": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "is_valid": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "is_login": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "last_activity": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1359,18 +1514,61 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthenticated",
+                        "description": "Unauthenticated / Session invalid or expired",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "isValid": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "is_valid": {
                                             "type": "boolean",
                                             "example": false
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Session expired"
+                                            "example": "Sesi tidak valid atau telah kadaluarsa"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "SESSION_EXPIRED",
+                                            "nullable": true
+                                        },
+                                        "is_blocked": {
+                                            "type": "boolean",
+                                            "example": false,
+                                            "nullable": true
+                                        },
+                                        "blocked_until": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "is_valid": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem saat memeriksa sesi"
                                         }
                                     },
                                     "type": "object"
@@ -1417,6 +1615,14 @@
                                         "ip": {
                                             "type": "string",
                                             "example": "127.0.0.1"
+                                        },
+                                        "location": {
+                                            "type": "string",
+                                            "example": "Localhost"
+                                        },
+                                        "sessionCreatedAt": {
+                                            "type": "string",
+                                            "format": "date-time"
                                         }
                                     },
                                     "type": "object"
@@ -1463,9 +1669,13 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Logged out from all devices"
+                                            "example": "Logout dari semua perangkat berhasil"
                                         }
                                     },
                                     "type": "object"
@@ -1482,6 +1692,148 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan saat logout dari semua perangkat"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/refresh-token": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh access token",
+                "description": "Refresh access token using refresh token",
+                "operationId": "refreshToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "2|zyxwuvtsrqponmlkjihgfedcba"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "1|newaccesstoken"
+                                        },
+                                        "refresh_token": {
+                                            "type": "string",
+                                            "example": "2|newrefreshtoken"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 3600
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized / Invalid Refresh Token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Refresh token tidak valid"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_REFRESH_TOKEN"
+                                        },
+                                        "is_blocked": {
+                                            "type": "boolean",
+                                            "example": false,
+                                            "nullable": true
+                                        },
+                                        "blocked_until": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gagal memperbarui token"
                                         }
                                     },
                                     "type": "object"
@@ -1580,12 +1932,22 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "document_hash"
+                                    "document_hash",
+                                    "signer",
+                                    "timestamp"
                                 ],
                                 "properties": {
                                     "document_hash": {
                                         "type": "string",
-                                        "example": "a1b2c3..."
+                                        "example": "0xe633e584a79873596fcfa93910aa87a1326a8cb1c5af9079e21a852aaa29cf8a"
+                                    },
+                                    "signer": {
+                                        "type": "string",
+                                        "example": "0x1234567890abcdef1234567890abcdef12345678"
+                                    },
+                                    "timestamp": {
+                                        "type": "integer",
+                                        "example": 1729932384
                                     }
                                 },
                                 "type": "object"
@@ -1610,13 +1972,16 @@
                                         },
                                         "signer": {
                                             "type": "string",
-                                            "example": "0x123..."
+                                            "example": "0x1234567890abcdef1234567890abcdef12345678"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Validation error"
                     },
                     "500": {
                         "description": "Blockchain error"
