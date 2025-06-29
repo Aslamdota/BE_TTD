@@ -82,7 +82,36 @@ class DocumentController extends Controller
      */
     public function upload(Request $request)
     {
-        // Implementasi method upload seperti sebelumnya
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'file' => 'required|file|mimes:pdf|max:25600', // max 25MB
+        ]);
+
+        $user = $request->user();
+        $file = $request->file('file');
+        $uniqueName = time().'_'.$user->id.'_'.\Str::random(8).'.pdf';
+        $filePath = $file->storeAs('documents', $uniqueName);
+
+        $document = Document::create([
+            'title' => $request->title,
+            'file_path' => $filePath,
+            'creator_id' => $user->id,
+            'status' => 'draft',
+            'hash' => hash_file('sha256', $file->getRealPath())
+        ]);
+
+            // Audit trail
+        \App\Models\AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'upload_document',
+            'description' => 'Upload dokumen: '.$document->title,
+            'ip_address' => $request->ip()
+        ]);
+
+        return response()->json([
+            'message' => 'Document uploaded successfully',
+            'document' => $document
+        ], 201);
     }
 
     /**
