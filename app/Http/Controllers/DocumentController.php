@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Models\MultiSignature;
 use App\Models\Signature;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -101,7 +102,7 @@ class DocumentController extends Controller
         ]);
 
             // Audit trail
-        \App\Models\AuditLog::create([
+        AuditLog::create([
             'user_id' => $user->id,
             'action' => 'upload_document',
             'description' => 'Upload dokumen: '.$document->title,
@@ -199,7 +200,7 @@ class DocumentController extends Controller
         // Simpan $qrData ke kolom atau generate QR di frontend
 
         // Audit trail
-        \App\Models\AuditLog::create([
+        AuditLog::create([
             'user_id' => $user->id,
             'action' => 'sign_document',
             'description' => 'Sign document: '.$document->title,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User;
+use App\Models\AuditLog;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -270,6 +271,13 @@ class AuthController extends Controller
                     'last_activity' => $user->last_activity
                 ]
             ]);
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'login',
+                'description' => 'User logged in',
+                'ip_address' => $request->ip()
+            ]);
+
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => false,
@@ -333,20 +341,23 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
+            $user->currentAccessToken()?->delete();
+            $user->is_login = false;
+            $user->save();
 
-            if ($user) {
-                $user->currentAccessToken()?->delete();
-                $user->is_login = false;
-                $user->save();
-            }
+            // Audit log: logout
+            AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'logout',
+                'description' => 'User logged out',
+                'ip_address' => $request->ip()
+            ]);
 
             return response()->json([
                 'status' => true,
                 'message' => 'Logout berhasil'
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Logout failed', ['error' => $e->getMessage()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Terjadi kesalahan saat logout'
@@ -478,7 +489,7 @@ class AuthController extends Controller
                     'code' => 'ACCOUNT_BLOCKED',
                     'is_blocked' => true,
                     'blocked_until' => $user->blocked_until->toISOString()
-                ], 401); 
+                ], 401);
             }
 
             if (!$user->is_login) {
@@ -706,7 +717,7 @@ class AuthController extends Controller
             }
 
             $refreshToken = $user->tokens()
-                ->where('name', 'VirSign Refresh Token') 
+                ->where('name', 'VirSign Refresh Token')
                 ->where('token', hash('sha256', $request->refresh_token))
                 ->whereJsonContains('abilities', 'refresh')
                 ->first();

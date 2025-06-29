@@ -833,4 +833,22 @@ class AdminController extends Controller
             return response()->json(['message' => 'Import gagal', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function listCertificates()
+    {
+        return response()->json(\App\Models\Certificate::with('user')->get());
+    }
+
+    public function createCertificate(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'serial_number' => 'required|unique:certificates,serial_number',
+            'issuer' => 'required|string',
+            'valid_from' => 'required|date',
+            'valid_to' => 'required|date|after:valid_from',
+        ]);
+        $cert = \App\Models\Certificate::create($request->all());
+        return response()->json(['message' => 'Certificate created', 'certificate' => $cert], 201);
+    }
 }
