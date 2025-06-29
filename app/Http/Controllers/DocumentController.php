@@ -253,9 +253,16 @@ class DocumentController extends Controller
      *     )
      * )
      */
+
     public function verify(Request $request)
     {
-        // Implementasi method verify seperti sebelumnya
+        $request->validate(['hash' => 'required|string']);
+        $document = Document::where('hash', $request->hash)->first();
+        if (!$document) {
+            return response()->json(['is_valid' => false, 'message' => 'Dokumen tidak ditemukan'], 404);
+        }
+        // Cek integritas, signature, dsb...
+        return response()->json(['is_valid' => true, 'document' => $document]);
     }
 
     /**
