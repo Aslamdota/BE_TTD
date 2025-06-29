@@ -171,9 +171,46 @@ class DocumentController extends Controller
      *     )
      * )
      */
+
     public function sign(Request $request, $documentId)
     {
-        // Implementasi method sign seperti sebelumnya
+        $user = $request->user();
+        $document = Document::findOrFail($documentId);
+
+        // Validasi hak tanda tangan, dsb...
+
+        // Simpan signature hash
+        $signatureHash = hash('sha256', $user->id . $document->id . now());
+        $signature = Signature::create([
+            'document_id' => $document->id,
+            'user_id' => $user->id,
+            'signature_hash' => $signatureHash,
+            'signed_at' => now(),
+            'status' => 'signed'
+        ]);
+
+        // Generate QR code (gunakan package endroid/qr-code atau simpan data untuk frontend)
+        $qrData = [
+            'document_hash' => $document->hash,
+            'user_id' => $user->id,
+            'timestamp' => now()->toIso8601String(),
+            'verify_url' => url('/api/verify?hash='.$document->hash)
+        ];
+        // Simpan $qrData ke kolom atau generate QR di frontend
+
+        // Audit trail
+        \App\Models\AuditLog::create([
+            'user_id' => $user->id,
+            'action' => 'sign_document',
+            'description' => 'Sign document: '.$document->title,
+            'ip_address' => $request->ip()
+        ]);
+
+        return response()->json([
+            'message' => 'Document signed successfully',
+            'signature' => $signature,
+            'qr_data' => $qrData
+        ]);
     }
 
     /**
@@ -324,5 +361,14 @@ class DocumentController extends Controller
             ->paginate(10);
 
         return response()->json($signatures);
+    }
+
+    public function saveSignatureTemplate($imageBase64)
+    {
+        $path = 'signatures/'.$this->id.'_template.png';
+        \Storage::put($path, base64_decode($imageBase64));
+        // Simpan path di kolom user jika perlu
+        $this->signature_template = $path;
+        $this->save();
     }
 }
