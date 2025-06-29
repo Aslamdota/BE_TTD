@@ -7,6 +7,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
 use App\Http\Controllers\Api\ApiKeyController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +68,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/menus', [AdminController::class, 'createMenu']);
         Route::put('/menus/{menuId}', [AdminController::class, 'updateMenu']);
         Route::delete('/menus/{menuId}', [AdminController::class, 'deleteMenu']);
+
+        // Email verification
+        Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+            $request->fulfill();
+            return response()->json(['message' => 'Email verified!']);
+        })->middleware(['signed'])->name('verification.verify');
+
+        Route::post('/email/verification-notification', function (Request $request) {
+            $request->user()->sendEmailVerificationNotification();
+            return response()->json(['message' => 'Verification link sent!']);
+        })->middleware(['throttle:6,1']);
     });
 
     Route::middleware(['auth:sanctum', 'can:admin'])->post('/admin/import-dosen', [AdminController::class, 'importDosen']);

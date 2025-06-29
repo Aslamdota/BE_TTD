@@ -94,6 +94,7 @@ class AuthController extends Controller
         ]);
 
         $user->generateKeyPair();
+        $user->sendEmailVerificationNotification();
 
         return response()->json([
             'message' => 'User registered successfully',
