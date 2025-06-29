@@ -13,6 +13,9 @@ use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 
 /**
  * @OA\Info(
@@ -789,5 +792,265 @@ class AuthController extends Controller
                 'error_detail' => config('app.debug') ? $e->getMessage() : null
             ], 401);
         }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/admin/users/{userId}/password",
+     *     tags={"Admin"},
+     *     summary="Admin change user password",
+     *     operationId="adminChangeUserPassword",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the user",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"password"},
+     *             @OA\Property(property="password", type="string", format="password", example="newpassword123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Password updated successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function adminChangeUserPassword(Request $request, $userId)
+    {
+        $request->validate([
+            'password' => 'required|string|min:8'
+        ]);
+        $user = \App\Models\User::findOrFail($userId);
+        $user->password = \Hash::make($request->password);
+        $user->save();
+    
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'admin_change_password',
+            'description' => 'Admin changed password for user ID: '.$userId,
+            'ip_address' => $request->ip()
+        ]);
+    
+        return response()->json(['message' => 'Password updated successfully']);
+    }
+
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $status = Password::sendResetLink($request->only('email'));
+        return response()->json([
+            'status' => $status === Password::RESET_LINK_SENT,
+            'message' => __($status)
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return response()->json([
+            'status' => $status === Password::PASSWORD_RESET,
+            'message' => __($status)
+        ]);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/user/profile",
+     *     tags={"Auth"},
+     *     summary="Update user profile",
+     *     operationId="updateProfile",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Nama Baru"),
+     *             @OA\Property(property="nip", type="string", example="1234567890")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profil berhasil diupdate",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Profil berhasil diupdate"),
+     *             @OA\Property(property="user", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'nip' => 'sometimes|string|max:50|unique:users,nip,'.$user->id,
+        ]);
+        $user->update($request->only('name', 'nip'));
+        return response()->json(['status' => true, 'message' => 'Profil berhasil diupdate', 'user' => $user]);
+    }
+    
+    /**
+     * @OA\Post(
+     *     path="/api/user/change-password",
+     *     tags={"Auth"},
+     *     summary="Change user password",
+     *     operationId="changePassword",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"old_password","new_password","new_password_confirmation"},
+     *             @OA\Property(property="old_password", type="string", format="password", example="oldpass"),
+     *             @OA\Property(property="new_password", type="string", format="password", example="newpass123"),
+     *             @OA\Property(property="new_password_confirmation", type="string", format="password", example="newpass123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password berhasil diganti",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Password berhasil diganti")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+        $request->validate([
+            'old_password' => 'required',
+            'new_password' => 'required|string|min:8|confirmed'
+        ]);
+        if (!\Hash::check($request->old_password, $user->password)) {
+            return response()->json(['status' => false, 'message' => 'Password lama salah'], 422);
+        }
+        $user->password = \Hash::make($request->new_password);
+        $user->save();
+        return response()->json(['status' => true, 'message' => 'Password berhasil diganti']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/send-otp",
+     *     tags={"Auth"},
+     *     summary="Send OTP to user email",
+     *     operationId="sendOtp",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP sent"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
+    public function sendOtp(Request $request)
+    {
+        $user = User::where('email', $request->email)->firstOrFail();
+        $otp = rand(100000, 999999);
+        $user->otp_code = $otp;
+        $user->otp_expires_at = now()->addMinutes(10);
+        $user->save();
+
+        \Mail::raw("Kode OTP Anda: $otp", function ($msg) use ($user) {
+            $msg->to($user->email)->subject('Kode OTP Login');
+        });
+
+        return response()->json(['message' => 'OTP sent']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/verify-otp",
+     *     tags={"Auth"},
+     *     summary="Verify OTP code",
+     *     operationId="verifyOtp",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","otp"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *             @OA\Property(property="otp", type="string", example="123456")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP valid"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="OTP tidak valid"
+     *     )
+     * )
+     */
+    public function verifyOtp(Request $request)
+    {
+        $user = User::where('email', $request->email)->firstOrFail();
+        if ($user->otp_code === $request->otp && now()->lessThan($user->otp_expires_at)) {
+            $user->otp_code = null;
+            $user->otp_expires_at = null;
+            $user->save();
+            return response()->json(['status' => true, 'message' => 'OTP valid']);
+        }
+        return response()->json(['status' => false, 'message' => 'OTP tidak valid'], 422);
     }
 }
