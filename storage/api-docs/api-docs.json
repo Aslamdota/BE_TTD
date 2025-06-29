@@ -1114,7 +1114,6 @@
                     "Auth"
                 ],
                 "summary": "Login user",
-                "description": "Authenticate user and create token",
                 "operationId": "login",
                 "requestBody": {
                     "required": true,
@@ -1314,7 +1313,7 @@
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Logout user",
+                "summary": "Logout user and revoke current access token",
                 "description": "Logout user (revoke token)",
                 "operationId": "logout",
                 "responses": {
@@ -1331,6 +1330,16 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Logout berhasil"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "logout_time": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2023-04-08T14:30:00Z"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1339,14 +1348,51 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthenticated",
+                        "description": "Unauthenticated (token invalid/missing)",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Unauthenticated"
+                                            "example": "Token tidak valid atau tidak ditemukan"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INVALID_TOKEN"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden (account blocked)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Akun Anda terkunci sementara"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ACCOUNT_BLOCKED"
+                                        },
+                                        "blocked_until": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2023-04-08T15:00:00Z"
                                         }
                                     },
                                     "type": "object"
@@ -1355,7 +1401,7 @@
                         }
                     },
                     "500": {
-                        "description": "Server Error",
+                        "description": "Internal server error",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1367,6 +1413,15 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Terjadi kesalahan saat logout"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "SERVER_ERROR"
+                                        },
+                                        "error_detail": {
+                                            "type": "string",
+                                            "example": "Database connection failed",
+                                            "nullable": true
                                         }
                                     },
                                     "type": "object"

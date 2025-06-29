@@ -102,72 +102,70 @@ class AuthController extends Controller
     }
 
     /**
-     * Authenticate user and create token
-     *
      * @OA\Post(
-     * path="/api/login",
-     * tags={"Auth"},
-     * summary="Login user",
-     * operationId="login",
-     * @OA\RequestBody(
-     * required=true,
-     * @OA\JsonContent(
-     * required={"email","password"},
-     * @OA\Property(property="email", type="string", format="email", example="john@example.com"),
-     * @OA\Property(property="password", type="string", format="password", example="password123"),
-     * @OA\Property(property="force_logout", type="boolean", example=false, description="Set to true to force logout from other devices and login to this one.")
-     * )
-     * ),
-     * @OA\Response(
-     * response=200,
-     * description="Login successful",
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="boolean", example=true),
-     * @OA\Property(property="access_token", type="string", example="1|abcdefghijklmnopqrstuvwxyz"),
-     * @OA\Property(property="refresh_token", type="string", example="2|zyxwuvtsrqponmlkjihgfedcba"),
-     * @OA\Property(property="token_type", type="string", example="Bearer"),
-     * @OA\Property(property="expires_in", type="integer", example=3600, description="Token expiration in seconds"),
-     * @OA\Property(property="user", type="object",
-     * @OA\Property(property="id", type="integer", example=1),
-     * @OA\Property(property="name", type="string", example="John Doe"),
-     * @OA\Property(property="email", type="string", example="john@example.com"),
-     * @OA\Property(property="roles", type="array", @OA\Items(type="string")),
-     * @OA\Property(property="is_login", type="boolean", example=true),
-     * @OA\Property(property="last_activity", type="string", format="date-time")
-     * )
-     * )
-     * ),
-     * @OA\Response(
-     * response=401,
-     * description="Unauthorized / Invalid Credentials / Blocked",
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="boolean", example=false),
-     * @OA\Property(property="message", type="string", example="Email atau password salah"),
-     * @OA\Property(property="code", type="string", example="AUTH_FAILED"),
-     * @OA\Property(property="remaining_attempts", type="integer", example=2, nullable=true, description="Remaining attempts before account is blocked"),
-     * @OA\Property(property="is_blocked", type="boolean", example=false, description="True if account is currently blocked"),
-     * @OA\Property(property="blocked_until", type="string", format="date-time", nullable=true, description="Timestamp when account block expires")
-     * )
-     * ),
-     * @OA\Response(
-     * response=403,
-     * description="Forbidden / Already Logged In",
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="boolean", example=false),
-     * @OA\Property(property="message", type="string", example="Anda sudah login di perangkat lain"),
-     * @OA\Property(property="code", type="string", example="ALREADY_LOGGED_IN"),
-     * @OA\Property(property="already_logged_in", type="boolean", example=true, description="True if user is already logged in on another device")
-     * )
-     * ),
-     * @OA\Response(
-     * response=500,
-     * description="Server Error",
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="boolean", example=false),
-     * @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem"),
-     * @OA\Property(property="code", type="string", example="SERVER_ERROR")
-     * )
-     * )
+     *     path="/api/login",
+     *     tags={"Auth"},
+     *     summary="Login user",
+     *     operationId="login",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="force_logout", type="boolean", example=false, description="Set to true to force logout from other devices and login to this one.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="access_token", type="string", example="1|abcdefghijklmnopqrstuvwxyz"),
+     *             @OA\Property(property="refresh_token", type="string", example="2|zyxwuvtsrqponmlkjihgfedcba"),
+     *             @OA\Property(property="token_type", type="string", example="Bearer"),
+     *             @OA\Property(property="expires_in", type="integer", example=3600, description="Token expiration in seconds"),
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="roles", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="is_login", type="boolean", example=true),
+     *                 @OA\Property(property="last_activity", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized / Invalid Credentials / Blocked",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Email atau password salah"),
+     *             @OA\Property(property="code", type="string", example="AUTH_FAILED"),
+     *             @OA\Property(property="remaining_attempts", type="integer", example=2, nullable=true, description="Remaining attempts before account is blocked"),
+     *             @OA\Property(property="is_blocked", type="boolean", example=false, description="True if account is currently blocked"),
+     *             @OA\Property(property="blocked_until", type="string", format="date-time", nullable=true, description="Timestamp when account block expires")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden / Already Logged In",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Anda sudah login di perangkat lain"),
+     *             @OA\Property(property="code", type="string", example="ALREADY_LOGGED_IN"),
+     *             @OA\Property(property="already_logged_in", type="boolean", example=true, description="True if user is already logged in on another device")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem"),
+     *             @OA\Property(property="code", type="string", example="SERVER_ERROR")
+     *         )
+     *     )
      * )
      */
     public function login(Request $request)
@@ -302,39 +300,60 @@ class AuthController extends Controller
         }
     }
 
-
     /**
      * Logout user (revoke token)
      *
      * @OA\Post(
-     * path="/api/logout",
-     * tags={"Auth"},
-     * summary="Logout user",
-     * operationId="logout",
-     * security={{"sanctum":{}}},
-     * @OA\Response(
-     * response=200,
-     * description="Successfully logged out",
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="boolean", example=true),
-     * @OA\Property(property="message", type="string", example="Logout berhasil")
-     * )
-     * ),
-     * @OA\Response(
-     * response=401,
-     * description="Unauthenticated",
-     * @OA\JsonContent(
-     * @OA\Property(property="message", type="string", example="Unauthenticated")
-     * )
-     * ),
-     * @OA\Response(
-     * response=500,
-     * description="Server Error",
-     * @OA\JsonContent(
-     * @OA\Property(property="status", type="boolean", example=false),
-     * @OA\Property(property="message", type="string", example="Terjadi kesalahan saat logout")
-     * )
-     * )
+     *     path="/api/logout",
+     *     tags={"Auth"},
+     *     summary="Logout user and revoke current access token",
+     *     operationId="logout",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully logged out",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Logout berhasil"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="logout_time", type="string", format="date-time", example="2023-04-08T14:30:00Z")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated (token invalid/missing)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Token tidak valid atau tidak ditemukan"),
+     *             @OA\Property(property="code", type="string", example="INVALID_TOKEN")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden (account blocked)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Akun Anda terkunci sementara"),
+     *             @OA\Property(property="code", type="string", example="ACCOUNT_BLOCKED"),
+     *             @OA\Property(property="blocked_until", type="string", format="date-time", example="2023-04-08T15:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan saat logout"),
+     *             @OA\Property(property="code", type="string", example="SERVER_ERROR"),
+     *             @OA\Property(property="error_detail", type="string", example="Database connection failed", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Header(
+     *         header="X-Request-ID",
+     *         description="Unique request ID",
+     *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440000")
+     *     )
      * )
      */
     public function logout(Request $request)
