@@ -8,6 +8,8 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,6 +118,22 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
         $request->user()->sendEmailVerificationNotification();
         return response()->json(['message' => 'Verification link sent!']);
     })->middleware(['throttle:6,1']);
+});
+
+Route::get('/signature-proxy/{userId}/{filename}', function ($userId, $filename) {
+    $path = "signatures/{$userId}/{$filename}";
+
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404, 'Signature file not found');
+    }
+
+    $file = Storage::disk('public')->get($path);
+    $mime = Storage::disk('public')->mimeType($path);
+
+    return Response::make($file, 200, [
+        'Content-Type' => $mime,
+        'Access-Control-Allow-Origin' => '*',
+    ]);
 });
 
 /*------------------------------------------
