@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\BlockchainHash;
+
 /**
  * @OA\Tag(
  *     name="Documents",
@@ -29,6 +30,19 @@ use App\Models\BlockchainHash;
  *     @OA\Property(property="status", type="string", example="pending"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Signature",
+ *     required={"document_id","user_id","signature_hash"},
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="document_id", type="integer", example=1),
+ *     @OA\Property(property="user_id", type="integer", example=2),
+ *     @OA\Property(property="name", type="string", example="John Doe"),
+ *     @OA\Property(property="signature_hash", type="string", example="e0b153f8883c47cf99d15bdc..."),
+ *     @OA\Property(property="image_path", type="string", example="signatures/2/abc.png", nullable=true),
+ *     @OA\Property(property="signed_at", type="string", format="date-time"),
+ *     @OA\Property(property="status", type="string", example="signed")
  * )
  */
 class DocumentController extends Controller
@@ -58,6 +72,12 @@ class DocumentController extends Controller
      *                     type="string",
      *                     description="Hash SHA-256 dokumen dari frontend",
      *                     example="945e3f52aaa1bffee8f84039fd7e0ae9e351d952077c2c456451eaf25e6e1c65"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tx_hash",
+     *                     type="string",
+     *                     description="Blockchain transaction hash",
+     *                     example="0x123abc..."
      *                 )
      *             )
      *         )
@@ -67,11 +87,19 @@ class DocumentController extends Controller
      *         description="Document uploaded successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Document uploaded successfully"),
-     *             @OA\Property(property="document", ref="#/components/schemas/Document")
+     *             @OA\Property(property="document", ref="#/components/schemas/Document"),
+     *             @OA\Property(property="blockchain", type="object", nullable=true)
      *         )
      *     ),
      *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthorized")
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem")
+     *         )
+     *     )
      * )
      */
     public function upload(Request $request)
@@ -128,44 +156,68 @@ class DocumentController extends Controller
 
     }
 
-
     /**
-         * @OA\Post(
-         *     path="/api/documents/{documentId}/sign",
-         *     tags={"Documents"},
-         *     summary="Sign a document",
-         *     operationId="signDocument",
-         *     security={{"sanctum":{}}},
-         *     @OA\Parameter(
-         *         name="documentId",
-         *         in="path",
-         *         required=true,
-         *         @OA\Schema(type="integer")
-         *     ),
-         *     @OA\RequestBody(
-         *         required=true,
-         *         @OA\JsonContent(
-         *             required={"signature_hash"},
-         *             @OA\Property(
-         *                 property="signature_hash",
-         *                 type="string",
-         *                 example="e0b153f8883c47cf99d15bdc..."
-         *             )
-         *         )
-         *     ),
-         *     @OA\Response(
-         *         response=200,
-         *         description="Document signed successfully",
-         *         @OA\JsonContent(
-         *             @OA\Property(property="message", type="string", example="Document signed successfully"),
-         *             @OA\Property(property="signature", ref="#/components/schemas/Signature")
-         *         )
-         *     ),
-         *     @OA\Response(response=422, description="Validation error"),
-         *     @OA\Response(response=401, description="Unauthorized"),
-         *     @OA\Response(response=404, description="Document not found")
-         * )
-         */
+     * @OA\Post(
+     *     path="/api/documents/{documentId}/sign",
+     *     tags={"Documents"},
+     *     summary="Sign a document",
+     *     operationId="signDocument",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="documentId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"signature_hash"},
+     *             @OA\Property(
+     *                 property="signature_hash",
+     *                 type="string",
+     *                 example="e0b153f8883c47cf99d15bdc..."
+     *             ),
+     *             @OA\Property(
+     *                 property="signature_image",
+     *                 type="string",
+     *                 format="binary",
+     *                 description="Gambar tanda tangan (opsional, PNG)"
+     *             ),
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="John Doe"
+     *             ),
+     *             @OA\Property(
+     *                 property="tx_hash",
+     *                 type="string",
+     *                 example="0x123abc..."
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Document signed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Document signed successfully"),
+     *             @OA\Property(property="signature", ref="#/components/schemas/Signature"),
+     *             @OA\Property(property="blockchain", type="object", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="No active passkey found"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Document not found"),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem")
+     *         )
+     *     )
+     * )
+     */
     public function sign(Request $request, $documentId)
     {
         $request->validate([
@@ -177,6 +229,11 @@ class DocumentController extends Controller
 
         $user = $request->user();
         $document = Document::findOrFail($documentId);
+
+        $passkey = $user->activePasskey();
+        if (!$passkey) {
+            return response()->json(['message' => 'No active passkey found'], 403);
+        }
 
         // Upload gambar tanda tangan (jika ada)
         $path = null;
@@ -219,7 +276,7 @@ class DocumentController extends Controller
         return response()->json([
             'message' => 'Document signed successfully',
             'signature' => $signature,
-            'blockchain' => $blockchain, 
+            'blockchain' => $blockchain,
         ]);
     }
 
@@ -250,7 +307,7 @@ class DocumentController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="is_valid", type="boolean", example=true),
      *             @OA\Property(property="document", ref="#/components/schemas/Document"),
-     *             @OA\Property(property="signatures", type="array", @OA\Items(type="object"))
+     *             @OA\Property(property="signatures", type="array", @OA\Items(ref="#/components/schemas/Signature"))
      *         )
      *     ),
      *     @OA\Response(
@@ -260,10 +317,16 @@ class DocumentController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem")
+     *         )
      *     )
      * )
      */
-
     public function verify(Request $request)
     {
         $request->validate(['hash' => 'required|string']);
@@ -316,6 +379,13 @@ class DocumentController extends Controller
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem")
+     *         )
      *     )
      * )
      */
@@ -349,7 +419,7 @@ class DocumentController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Signature")),
      *             @OA\Property(property="first_page_url", type="string"),
      *             @OA\Property(property="from", type="integer"),
      *             @OA\Property(property="last_page", type="integer"),
@@ -366,6 +436,13 @@ class DocumentController extends Controller
      *     @OA\Response(
      *         response=401,
      *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Terjadi kesalahan sistem")
+     *         )
      *     )
      * )
      */
@@ -399,7 +476,7 @@ class DocumentController extends Controller
             ->get()
             ->map(function ($signature) {
                 $blockchain = BlockchainHash::where('hash', $signature->signature_hash)->first();
-                
+
                 $blockchainTx = $blockchain ? $blockchain->blockchain_tx : null;
 
                 return [
@@ -407,8 +484,8 @@ class DocumentController extends Controller
                     'name' => $signature->name,
                     'document_title' => optional($signature->document)->title,
                     'signature_hash' => $signature->signature_hash,
-                    'image_url' => $signature->image_path 
-                        ? secure_asset('storage/' . $signature->image_path) 
+                    'image_url' => $signature->image_path
+                        ? secure_asset('storage/' . $signature->image_path)
                         : null,
                     'image_path' => $signature->image_path,
                     'signed_at' => $signature->signed_at,
