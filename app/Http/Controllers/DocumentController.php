@@ -190,15 +190,6 @@ class DocumentController extends Controller
             'status' => 'signed'
         ]);
 
-        // Generate QR code (gunakan package endroid/qr-code atau simpan data untuk frontend)
-        $qrData = [
-            'document_hash' => $document->hash,
-            'user_id' => $user->id,
-            'timestamp' => now()->toIso8601String(),
-            'verify_url' => url('/api/verify?hash='.$document->hash)
-        ];
-        // Simpan $qrData ke kolom atau generate QR di frontend
-
         // Audit trail
         AuditLog::create([
             'user_id' => $user->id,
