@@ -33,11 +33,11 @@ use Illuminate\Support\Str;
  */
 class DocumentController extends Controller
 {
-    /**
+   /**
      * @OA\Post(
      *     path="/api/documents/upload",
      *     tags={"Documents"},
-     *     summary="Upload a new document",
+     *     summary="Upload a new signed document",
      *     operationId="uploadDocument",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -45,20 +45,19 @@ class DocumentController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"title","file"},
+     *                 required={"title", "file"},
      *                 @OA\Property(property="title", type="string", example="Contoh Dokumen"),
      *                 @OA\Property(
      *                     property="file",
      *                     type="string",
      *                     format="binary",
-     *                     description="File dokumen (PDF/DOC/DOCX)"
+     *                     description="File dokumen (PDF, maksimal 25MB)"
      *                 ),
-     *                 @OA\Property(property="is_multi_signature", type="boolean", example=false),
      *                 @OA\Property(
-     *                     property="signers",
-     *                     type="array",
-     *                     @OA\Items(type="integer", example=2),
-     *                     description="Required if is_multi_signature=true"
+     *                     property="hash",
+     *                     type="string",
+     *                     description="Hash SHA-256 dokumen dari frontend",
+     *                     example="945e3f52aaa1bffee8f84039fd7e0ae9e351d952077c2c456451eaf25e6e1c65"
      *                 )
      *             )
      *         )
@@ -71,26 +70,21 @@ class DocumentController extends Controller
      *             @OA\Property(property="document", ref="#/components/schemas/Document")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error"
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized"
-     *     )
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthorized")
      * )
      */
     public function upload(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf|max:25600', // max 25MB
+            'file' => 'required|file|mimes:pdf|max:25600',
+            'hash' => 'nullable|string'
         ]);
 
         $user = $request->user();
         $file = $request->file('file');
-        $uniqueName = time().'_'.$user->id.'_'.\Str::random(8).'.pdf';
+        $uniqueName = time() . '_' . $user->id . '_' . \Str::random(8) . '.pdf';
         $filePath = $file->storeAs('documents', $uniqueName);
 
         $document = Document::create([
@@ -98,14 +92,13 @@ class DocumentController extends Controller
             'file_path' => $filePath,
             'creator_id' => $user->id,
             'status' => 'draft',
-            'hash' => hash_file('sha256', $file->getRealPath())
+            'hash' => $request->input('hash')
         ]);
 
-            // Audit trail
         AuditLog::create([
             'user_id' => $user->id,
             'action' => 'upload_document',
-            'description' => 'Upload dokumen: '.$document->title,
+            'description' => 'Upload dokumen: ' . $document->title,
             'ip_address' => $request->ip()
         ]);
 

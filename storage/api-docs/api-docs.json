@@ -2336,7 +2336,7 @@
                 "tags": [
                     "Documents"
                 ],
-                "summary": "Upload a new document",
+                "summary": "Upload a new signed document",
                 "operationId": "uploadDocument",
                 "requestBody": {
                     "required": true,
@@ -2353,21 +2353,14 @@
                                         "example": "Contoh Dokumen"
                                     },
                                     "file": {
-                                        "description": "File dokumen (PDF/DOC/DOCX)",
+                                        "description": "File dokumen (PDF, maksimal 25MB)",
                                         "type": "string",
                                         "format": "binary"
                                     },
-                                    "is_multi_signature": {
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "signers": {
-                                        "description": "Required if is_multi_signature=true",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "integer",
-                                            "example": 2
-                                        }
+                                    "hash": {
+                                        "description": "Hash SHA-256 dokumen dari frontend",
+                                        "type": "string",
+                                        "example": "945e3f52aaa1bffee8f84039fd7e0ae9e351d952077c2c456451eaf25e6e1c65"
                                     }
                                 },
                                 "type": "object"
