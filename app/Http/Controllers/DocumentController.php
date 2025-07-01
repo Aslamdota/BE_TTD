@@ -149,15 +149,22 @@ class DocumentController extends Controller
     {
         $request->validate([
             'signature_hash' => 'required|string|max:255',
+            'signature_image' => 'nullable|image|mimes:png|max:2048',
         ]);
 
         $user = $request->user();
         $document = Document::findOrFail($documentId);
 
+        $path = null;
+        if ($request->hasFile('signature_image')) {
+            $path = $request->file('signature_image')->store("signatures/{$user->id}", 'public');
+        }
+
         $signature = Signature::create([
             'document_id' => $document->id,
             'user_id' => $user->id,
             'signature_hash' => $request->input('signature_hash'),
+            'image_path' => $path,
             'signed_at' => now(),
             'status' => 'signed'
         ]);
