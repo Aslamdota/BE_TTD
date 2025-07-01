@@ -367,8 +367,8 @@ class DocumentController extends Controller
                     'document_title' => optional($signature->document)->title,
                     'signature_hash' => $signature->signature_hash,
                     'image_url' => $signature->image_path 
-                        ? asset('storage/' . $signature->image_path) 
-                        : null,
+                    ? secure_asset('storage/' . $signature->image_path) 
+                    : null,
                     'signed_at' => $signature->signed_at,
                     'status' => $signature->status,
                 ];
