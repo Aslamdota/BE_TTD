@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\PasskeyController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
@@ -33,7 +34,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-    
+
     // Protected auth endpoints
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/check-session', [AuthController::class, 'checkSession']);
@@ -44,6 +45,9 @@ Route::prefix('auth')->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::get('/passkeys', [PasskeyController::class, 'index']);
+    Route::post('/passkeys', [PasskeyController::class, 'store']);
+    Route::put('/passkeys/{id}/revoke', [PasskeyController::class, 'revoke']);
     });
 });
 
@@ -53,7 +57,7 @@ Route::prefix('auth')->group(function () {
 Route::prefix('documents')->group(function () {
     // Public document endpoints
     Route::post('/verify', [DocumentController::class, 'verify']);
-    
+
     // Protected document endpoints
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/upload', [DocumentController::class, 'upload']);
@@ -73,7 +77,7 @@ Route::prefix('blockchain')->group(function () {
     // Public blockchain endpoints
     Route::post('/verify', [BlockchainController::class, 'verifyDocumentHash']);
     Route::post('/verify-signature', [BlockchainController::class, 'verifySignatureHash']);
-    
+
     // Protected blockchain endpoints
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/store', [BlockchainController::class, 'storeHash']);

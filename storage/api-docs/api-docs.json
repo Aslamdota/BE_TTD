@@ -2191,6 +2191,133 @@
                 }
             }
         },
+        "/api/passkeys": {
+            "get": {
+                "tags": [
+                    "Passkey"
+                ],
+                "summary": "List all passkeys for current user",
+                "operationId": "94464cb5909161b7d9b04ec37a20d0e7",
+                "responses": {
+                    "200": {
+                        "description": "List of passkeys",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "public_key": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "revoked_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Passkey"
+                ],
+                "summary": "Create new passkey (revoke old)",
+                "operationId": "4ba2fee2904b68f9990190e78c0b9957",
+                "responses": {
+                    "201": {
+                        "description": "Passkey created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Passkey created"
+                                        },
+                                        "passkey": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/passkeys/{id}/revoke": {
+            "put": {
+                "tags": [
+                    "Passkey"
+                ],
+                "summary": "Revoke a passkey",
+                "operationId": "28aed29dcdd742ffe194986c51d83e55",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Passkey revoked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Passkey revoked"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/blockchain/store": {
             "post": {
                 "tags": [
@@ -2361,6 +2488,11 @@
                                         "description": "Hash SHA-256 dokumen dari frontend",
                                         "type": "string",
                                         "example": "945e3f52aaa1bffee8f84039fd7e0ae9e351d952077c2c456451eaf25e6e1c65"
+                                    },
+                                    "tx_hash": {
+                                        "description": "Blockchain transaction hash",
+                                        "type": "string",
+                                        "example": "0x123abc..."
                                     }
                                 },
                                 "type": "object"
@@ -2381,6 +2513,10 @@
                                         },
                                         "document": {
                                             "$ref": "#/components/schemas/Document"
+                                        },
+                                        "blockchain": {
+                                            "type": "object",
+                                            "nullable": true
                                         }
                                     },
                                     "type": "object"
@@ -2393,6 +2529,22 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2413,7 +2565,6 @@
                     {
                         "name": "documentId",
                         "in": "path",
-                        "description": "ID dokumen yang akan ditandatangani",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -2426,13 +2577,25 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "password"
+                                    "signature_hash"
                                 ],
                                 "properties": {
-                                    "password": {
+                                    "signature_hash": {
                                         "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
+                                        "example": "e0b153f8883c47cf99d15bdc..."
+                                    },
+                                    "signature_image": {
+                                        "description": "Gambar tanda tangan (opsional, PNG)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "tx_hash": {
+                                        "type": "string",
+                                        "example": "0x123abc..."
                                     }
                                 },
                                 "type": "object"
@@ -2452,40 +2615,11 @@
                                             "example": "Document signed successfully"
                                         },
                                         "signature": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer"
-                                                },
-                                                "document_id": {
-                                                    "type": "integer"
-                                                },
-                                                "user_id": {
-                                                    "type": "integer"
-                                                },
-                                                "signature_hash": {
-                                                    "type": "string"
-                                                },
-                                                "blockchain_tx": {
-                                                    "type": "string",
-                                                    "nullable": true
-                                                },
-                                                "signed_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "status": {
-                                                    "type": "string"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/Signature"
+                                        },
+                                        "blockchain": {
+                                            "type": "object",
+                                            "nullable": true
                                         }
                                     },
                                     "type": "object"
@@ -2493,17 +2627,33 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "No active passkey found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
                     "401": {
                         "description": "Unauthorized"
-                    },
-                    "403": {
-                        "description": "Forbidden - User not authorized to sign this document"
                     },
                     "404": {
                         "description": "Document not found"
                     },
-                    "429": {
-                        "description": "Too many attempts"
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2557,7 +2707,7 @@
                                         "signatures": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/Signature"
                                             }
                                         }
                                     },
@@ -2571,6 +2721,22 @@
                     },
                     "422": {
                         "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2664,6 +2830,22 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2713,7 +2895,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/Signature"
                                             }
                                         },
                                         "first_page_url": {
@@ -2762,6 +2944,22 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Terjadi kesalahan sistem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2944,6 +3142,49 @@
                     }
                 },
                 "type": "object"
+            },
+            "Signature": {
+                "required": [
+                    "document_id",
+                    "user_id",
+                    "signature_hash"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "signature_hash": {
+                        "type": "string",
+                        "example": "e0b153f8883c47cf99d15bdc..."
+                    },
+                    "image_path": {
+                        "type": "string",
+                        "example": "signatures/2/abc.png",
+                        "nullable": true
+                    },
+                    "signed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "signed"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -2980,6 +3221,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Passkey",
+            "description": "Passkey"
         }
     ]
 }
