@@ -363,6 +363,7 @@ class DocumentController extends Controller
             ->map(function ($signature) {
                 return [
                     'id' => $signature->id,
+                    'name' => $signature->name,
                     'document_title' => optional($signature->document)->title,
                     'signature_hash' => $signature->signature_hash,
                     'image_url' => $signature->image_path 
