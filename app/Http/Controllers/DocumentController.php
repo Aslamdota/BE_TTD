@@ -389,7 +389,7 @@ class DocumentController extends Controller
         $this->save();
     }
 
-    function getMySignatures(Request $request)
+    public function getMySignatures(Request $request)
     {
         $user = $request->user();
 
@@ -398,17 +398,22 @@ class DocumentController extends Controller
             ->orderByDesc('signed_at')
             ->get()
             ->map(function ($signature) {
+                $blockchain = BlockchainHash::where('hash', $signature->signature_hash)->first();
+                
+                $blockchainTx = $blockchain ? $blockchain->blockchain_tx : null;
+
                 return [
                     'id' => $signature->id,
                     'name' => $signature->name,
                     'document_title' => optional($signature->document)->title,
                     'signature_hash' => $signature->signature_hash,
                     'image_url' => $signature->image_path 
-                    ? secure_asset('storage/' . $signature->image_path) 
-                    : null,
+                        ? secure_asset('storage/' . $signature->image_path) 
+                        : null,
                     'image_path' => $signature->image_path,
                     'signed_at' => $signature->signed_at,
                     'status' => $signature->status,
+                    'blockchain_tx' => $blockchainTx,
                 ];
             });
 
@@ -416,6 +421,7 @@ class DocumentController extends Controller
             'signatures' => $signatures
         ]);
     }
+
 
     private function storeBlockchainHash(array $data)
     {
