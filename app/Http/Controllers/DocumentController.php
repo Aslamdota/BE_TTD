@@ -349,4 +349,30 @@ class DocumentController extends Controller
         $this->signature_template = $path;
         $this->save();
     }
+
+    function getMySignatures(Request $request)
+    {
+        $user = $request->user();
+
+        $signatures = Signature::with('document')
+            ->where('user_id', $user->id)
+            ->orderByDesc('signed_at')
+            ->get()
+            ->map(function ($signature) {
+                return [
+                    'id' => $signature->id,
+                    'document_title' => optional($signature->document)->title,
+                    'signature_hash' => $signature->signature_hash,
+                    'image_url' => $signature->image_path 
+                        ? asset('storage/' . $signature->image_path) 
+                        : null,
+                    'signed_at' => $signature->signed_at,
+                    'status' => $signature->status,
+                ];
+            });
+
+        return response()->json([
+            'signatures' => $signatures
+        ]);
+    }
 }

@@ -58,6 +58,9 @@ Route::prefix('documents')->group(function () {
         Route::post('/{documentId}/sign', [DocumentController::class, 'sign']);
         Route::get('/', [DocumentController::class, 'list']);
         Route::get('/pending', [DocumentController::class, 'pendingSignatures']);
+
+
+         Route::get('/signatures', [DocumentController::class, 'getMySignatures']);
     });
 });
 
