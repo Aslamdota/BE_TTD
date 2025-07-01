@@ -77,4 +77,14 @@ class User extends Authenticatable implements MustVerifyEmail
         // Bersihkan resource
         openssl_pkey_free($res);
     }
+
+    public function passkeys()
+    {
+        return $this->hasMany(Passkey::class);
+    }
+
+    public function activePasskey()
+    {
+        return $this->passkeys()->where('status', 'active')->latest('created_at')->first();
+    }
 }
