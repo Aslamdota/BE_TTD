@@ -109,76 +109,55 @@ class DocumentController extends Controller
     }
 
     /**
-     * @OA\Post(
-     *     path="/api/documents/{documentId}/sign",
-     *     tags={"Documents"},
-     *     summary="Sign a document",
-     *     operationId="signDocument",
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="documentId",
-     *         in="path",
-     *         required=true,
-     *         description="ID dokumen yang akan ditandatangani",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"password"},
-     *             @OA\Property(property="password", type="string", format="password", example="password123")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Document signed successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Document signed successfully"),
-     *             @OA\Property(property="signature", type="object",
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="document_id", type="integer"),
-     *                 @OA\Property(property="user_id", type="integer"),
-     *                 @OA\Property(property="signature_hash", type="string"),
-     *                 @OA\Property(property="blockchain_tx", type="string", nullable=true),
-     *                 @OA\Property(property="signed_at", type="string", format="date-time"),
-     *                 @OA\Property(property="status", type="string"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized"
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Forbidden - User not authorized to sign this document"
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Document not found"
-     *     ),
-     *     @OA\Response(
-     *         response=429,
-     *         description="Too many attempts"
-     *     )
-     * )
-     */
-
+         * @OA\Post(
+         *     path="/api/documents/{documentId}/sign",
+         *     tags={"Documents"},
+         *     summary="Sign a document",
+         *     operationId="signDocument",
+         *     security={{"sanctum":{}}},
+         *     @OA\Parameter(
+         *         name="documentId",
+         *         in="path",
+         *         required=true,
+         *         @OA\Schema(type="integer")
+         *     ),
+         *     @OA\RequestBody(
+         *         required=true,
+         *         @OA\JsonContent(
+         *             required={"signature_hash"},
+         *             @OA\Property(
+         *                 property="signature_hash",
+         *                 type="string",
+         *                 example="e0b153f8883c47cf99d15bdc..."
+         *             )
+         *         )
+         *     ),
+         *     @OA\Response(
+         *         response=200,
+         *         description="Document signed successfully",
+         *         @OA\JsonContent(
+         *             @OA\Property(property="message", type="string", example="Document signed successfully"),
+         *             @OA\Property(property="signature", ref="#/components/schemas/Signature")
+         *         )
+         *     ),
+         *     @OA\Response(response=422, description="Validation error"),
+         *     @OA\Response(response=401, description="Unauthorized"),
+         *     @OA\Response(response=404, description="Document not found")
+         * )
+         */
     public function sign(Request $request, $documentId)
     {
+        $request->validate([
+            'signature_hash' => 'required|string|max:255',
+        ]);
+
         $user = $request->user();
         $document = Document::findOrFail($documentId);
 
-        // Validasi hak tanda tangan, dsb...
-
-        // Simpan signature hash
-        $signatureHash = hash('sha256', $user->id . $document->id . now());
         $signature = Signature::create([
             'document_id' => $document->id,
             'user_id' => $user->id,
-            'signature_hash' => $signatureHash,
+            'signature_hash' => $request->input('signature_hash'),
             'signed_at' => now(),
             'status' => 'signed'
         ]);
@@ -193,10 +172,10 @@ class DocumentController extends Controller
 
         return response()->json([
             'message' => 'Document signed successfully',
-            'signature' => $signature,
-            'qr_data' => $qrData
+            'signature' => $signature
         ]);
     }
+
 
     /**
      * @OA\Post(
