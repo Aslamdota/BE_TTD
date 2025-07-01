@@ -369,6 +369,7 @@ class DocumentController extends Controller
                     'image_url' => $signature->image_path 
                     ? secure_asset('storage/' . $signature->image_path) 
                     : null,
+                    'image_path' => $signature->image_path,
                     'signed_at' => $signature->signed_at,
                     'status' => $signature->status,
                 ];
