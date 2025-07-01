@@ -124,17 +124,19 @@ Route::get('/signature-proxy/{userId}/{filename}', function ($userId, $filename)
     $path = "signatures/{$userId}/{$filename}";
 
     if (!Storage::disk('public')->exists($path)) {
-        abort(404, 'Signature file not found');
+        return response()->json(['message' => 'Signature file not found'], 404);
     }
 
     $file = Storage::disk('public')->get($path);
     $mime = Storage::disk('public')->mimeType($path);
 
-    return Response::make($file, 200, [
-        'Content-Type' => $mime,
-        'Access-Control-Allow-Origin' => '*',
-    ]);
+    return response($file, 200)
+        ->header('Content-Type', $mime)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, Authorization');
 });
+
 
 /*------------------------------------------
 | TEST ROUTE
