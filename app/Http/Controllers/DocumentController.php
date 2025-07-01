@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-
+use App\Models\BlockchainHash;
 /**
  * @OA\Tag(
  *     name="Documents",
@@ -79,14 +79,18 @@ class DocumentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'file' => 'required|file|mimes:pdf|max:25600',
-            'hash' => 'nullable|string'
+            'hash' => 'nullable|string',
+            'tx_hash' => 'nullable|string'
         ]);
 
         $user = $request->user();
         $file = $request->file('file');
-        $uniqueName = time() . '_' . $user->id . '_' . \Str::random(8) . '.pdf';
-        $filePath = $file->storeAs('documents', $uniqueName);
 
+        // Simpan file
+        $uniqueName = time() . '_' . $user->id . '_' . \Str::random(8) . '.pdf';
+        $filePath = $file->storeAs('documents', $uniqueName, 'public');
+
+        // Simpan dokumen ke database
         $document = Document::create([
             'title' => $request->title,
             'file_path' => $filePath,
@@ -95,6 +99,7 @@ class DocumentController extends Controller
             'hash' => $request->input('hash')
         ]);
 
+        // Catat log audit
         AuditLog::create([
             'user_id' => $user->id,
             'action' => 'upload_document',
@@ -102,11 +107,27 @@ class DocumentController extends Controller
             'ip_address' => $request->ip()
         ]);
 
+        $blockchain = null;
+
+        if ($request->filled('hash')) {
+            $blockchain = $this->storeBlockchainHash([
+                'hash' => $request->input('hash'),
+                'type' => 'document_original',
+                'user_id' => $user->id,
+                'document_id' => $document->id,
+                'blockchain_tx' => $request->input('tx_hash'),
+                'signed_at' => now(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'Document uploaded successfully',
-            'document' => $document
+            'document' => $document,
+            'blockchain' => $blockchain,
         ], 201);
+
     }
+
 
     /**
          * @OA\Post(
@@ -150,17 +171,20 @@ class DocumentController extends Controller
         $request->validate([
             'signature_hash' => 'required|string|max:255',
             'signature_image' => 'nullable|image|mimes:png|max:2048',
-            'name' => 'nullable|string|max:255'
+            'name' => 'nullable|string|max:255',
+            'tx_hash' => 'nullable|string'
         ]);
 
         $user = $request->user();
         $document = Document::findOrFail($documentId);
 
+        // Upload gambar tanda tangan (jika ada)
         $path = null;
         if ($request->hasFile('signature_image')) {
             $path = $request->file('signature_image')->store("signatures/{$user->id}", 'public');
         }
 
+        // Simpan ke tabel signatures
         $signature = Signature::create([
             'document_id' => $document->id,
             'user_id' => $user->id,
@@ -171,20 +195,33 @@ class DocumentController extends Controller
             'status' => 'signed'
         ]);
 
-        // Audit trail
+        // Catat ke audit log
         AuditLog::create([
             'user_id' => $user->id,
             'action' => 'sign_document',
-            'description' => 'Sign document: '.$document->title,
+            'description' => 'Sign document: ' . $document->title,
             'ip_address' => $request->ip()
         ]);
 
+        $blockchain = null;
+
+        if ($request->filled('hash')) {
+            $blockchain = $this->storeBlockchainHash([
+                'hash' => $request->input('signature_hash'),
+                'type' => 'signature',
+                'user_id' => $user->id,
+                'document_id' => $document->id,
+                'blockchain_tx' => $request->input('tx_hash'),
+                'signed_at' => now(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'Document signed successfully',
-            'signature' => $signature
+            'signature' => $signature,
+            'blockchain' => $blockchain, 
         ]);
     }
-
 
     /**
      * @OA\Post(
@@ -378,5 +415,19 @@ class DocumentController extends Controller
         return response()->json([
             'signatures' => $signatures
         ]);
+    }
+
+    private function storeBlockchainHash(array $data)
+    {
+        return BlockchainHash::updateOrCreate(
+            ['hash' => $data['hash']],
+            [
+                'type' => $data['type'],
+                'user_id' => $data['user_id'] ?? null,
+                'document_id' => $data['document_id'] ?? null,
+                'blockchain_tx' => $data['blockchain_tx'] ?? null,
+                'signed_at' => $data['signed_at'] ?? now(),
+            ]
+        );
     }
 }
