@@ -150,6 +150,7 @@ class DocumentController extends Controller
         $request->validate([
             'signature_hash' => 'required|string|max:255',
             'signature_image' => 'nullable|image|mimes:png|max:2048',
+            'name' => 'nullable|string|max:255'
         ]);
 
         $user = $request->user();
@@ -163,6 +164,7 @@ class DocumentController extends Controller
         $signature = Signature::create([
             'document_id' => $document->id,
             'user_id' => $user->id,
+            'name' => $request->input('name'),
             'signature_hash' => $request->input('signature_hash'),
             'image_path' => $path,
             'signed_at' => now(),
