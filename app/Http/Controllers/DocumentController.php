@@ -205,7 +205,7 @@ class DocumentController extends Controller
 
         $blockchain = null;
 
-        if ($request->filled('hash')) {
+        if ($request->filled('signature_hash')) {
             $blockchain = $this->storeBlockchainHash([
                 'hash' => $request->input('signature_hash'),
                 'type' => 'signature',
