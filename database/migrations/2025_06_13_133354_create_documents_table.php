@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('title');
             $table->string('file_path');
             $table->string('hash');
-            $table->string('blockchain_tx')->nullable();
             $table->foreignId('creator_id')->constrained('users');
             $table->string('status')->default('draft');
             $table->timestamps();

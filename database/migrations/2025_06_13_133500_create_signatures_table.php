@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('document_id')->constrained();
             $table->foreignId('user_id')->constrained();
             $table->string('signature_hash')->nullable();
-            $table->string('blockchain_tx')->nullable();
             $table->timestamp('signed_at')->nullable();
             $table->string('status')->default('pending');
             $table->integer('attempts')->default(0);
