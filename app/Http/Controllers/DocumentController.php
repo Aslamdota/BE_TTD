@@ -134,10 +134,23 @@ class DocumentController extends Controller
 
         $hashVerified = false;
         $hash = $request->input('hash');
+        $calculatedHash = null;
+
         if ($hash) {
+            // Ambil ulang file yang sudah di-upload
             $fileContent = file_get_contents(storage_path('app/public/' . $filePath));
             $calculatedHash = hash('sha256', $fileContent);
             $hashVerified = ($calculatedHash === $hash);
+
+            // Logging untuk debug jika hash tidak cocok
+            if (!$hashVerified) {
+                \Log::warning('Hash mismatch on upload', [
+                    'user_id' => $user->id,
+                    'frontend_hash' => $hash,
+                    'backend_hash' => $calculatedHash,
+                    'file_path' => $filePath,
+                ]);
+            }
         }
 
         $document = Document::create([
