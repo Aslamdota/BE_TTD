@@ -46,8 +46,8 @@ Route::prefix('auth')->group(function () {
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         Route::post('/change-password', [AuthController::class, 'changePassword']);
         Route::get('/passkeys', [PasskeyController::class, 'index']);
-    Route::post('/passkeys', [PasskeyController::class, 'store']);
-    Route::put('/passkeys/{id}/revoke', [PasskeyController::class, 'revoke']);
+        Route::post('/passkeys', [PasskeyController::class, 'store']);
+        Route::put('/passkeys/{id}/revoke', [PasskeyController::class, 'revoke']);
     });
 });
 
@@ -64,9 +64,7 @@ Route::prefix('documents')->group(function () {
         Route::post('/{documentId}/sign', [DocumentController::class, 'sign']);
         Route::get('/', [DocumentController::class, 'list']);
         Route::get('/pending', [DocumentController::class, 'pendingSignatures']);
-
-
-         Route::get('/signatures', [DocumentController::class, 'getMySignatures']);
+        Route::get('/signatures', [DocumentController::class, 'getMySignatures']);
     });
 });
 
@@ -87,8 +85,14 @@ Route::prefix('blockchain')->group(function () {
 /*------------------------------------------
 | ADMIN ROUTES
 |------------------------------------------*/
-Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(function () {
-    // User Management
+Route::prefix('admin')
+    ->middleware(['auth:sanctum', 'can:admin', 'throttle:30,1'])
+    ->group(function () {
+    // Dashboard & Activity
+    Route::get('/dashboard', [AdminController::class, 'dashboardSummary']);
+    Route::get('/audit-logs', [AdminController::class, 'auditLogs']);
+
+    // User Management (CRUD Dosen)
     Route::get('/users', [AdminController::class, 'listUsers']);
     Route::post('/users', [AdminController::class, 'createUser']);
     Route::put('/users/{userId}', [AdminController::class, 'updateUser']);
@@ -140,7 +144,6 @@ Route::get('/signature-proxy/{userId}/{filename}', function ($userId, $filename)
         ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, Authorization');
 });
-
 
 /*------------------------------------------
 | TEST ROUTE

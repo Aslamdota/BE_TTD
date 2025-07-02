@@ -7,8 +7,13 @@ use App\Models\MstKeyApi;
 use App\Models\MstMenu;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Certificate;
+use App\Models\Document;
+use App\Models\Signature;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Imports\DosenImport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -70,6 +75,91 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class AdminController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/admin/dashboard",
+     *     tags={"Admin"},
+     *     summary="Get dashboard summary for admin",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dashboard summary",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_users", type="integer"),
+     *             @OA\Property(property="total_documents", type="integer"),
+     *             @OA\Property(property="total_signatures", type="integer"),
+     *             @OA\Property(property="total_verified_documents", type="integer"),
+     *             @OA\Property(property="bar_chart", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="pie_chart", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
+    public function dashboardSummary()
+    {
+        // Total
+        $totalUsers = User::count();
+        $totalDocuments = Document::count();
+        $totalSignatures = Signature::where('status', 'signed')->count();
+        $totalVerifiedDocuments = Document::where('hash_verified', true)->count();
+
+        // Bar chart: aktivitas dokumen per hari 7 hari terakhir
+        $barChart = AuditLog::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
+            ->where('action', 'like', '%document%')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // Pie chart: distribusi status dokumen
+        $pieChart = Document::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->get();
+
+        return response()->json([
+            'total_users' => $totalUsers,
+            'total_documents' => $totalDocuments,
+            'total_signatures' => $totalSignatures,
+            'total_verified_documents' => $totalVerifiedDocuments,
+            'bar_chart' => $barChart,
+            'pie_chart' => $pieChart,
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/audit-logs",
+     *     tags={"Admin"},
+     *     summary="Get audit logs (activity history)",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Audit logs",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
+    public function auditLogs(Request $request)
+    {
+        $logs = AuditLog::with('user:id,name,email')
+            ->orderByDesc('created_at')
+            ->paginate($request->per_page ?? 10);
+
+        return response()->json($logs);
+    }
+
     /**
      * @OA\Get(
      *     path="/api/admin/users",

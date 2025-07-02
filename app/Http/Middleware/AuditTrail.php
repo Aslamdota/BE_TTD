@@ -13,10 +13,11 @@ class AuditTrail
         $response = $next($request);
 
         if (Auth::check()) {
+            $data = $request->except(['password', 'password_confirmation', 'token']);
             AuditLog::create([
                 'user_id' => Auth::id(),
                 'action' => $request->method().' '.$request->path(),
-                'description' => json_encode($request->all()),
+                'description' => json_encode($data),
                 'ip_address' => $request->ip()
             ]);
         }
