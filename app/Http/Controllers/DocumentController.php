@@ -8,7 +8,6 @@ use App\Models\Signature;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\BlockchainHash;
 
@@ -25,6 +24,7 @@ use App\Models\BlockchainHash;
  *     @OA\Property(property="title", type="string", example="Contoh Dokumen"),
  *     @OA\Property(property="file_path", type="string", example="documents/abc123.pdf"),
  *     @OA\Property(property="hash", type="string", example="a1b2c3..."),
+ *     @OA\Property(property="hash_verified", type="boolean", example=true),
  *     @OA\Property(property="blockchain_tx", type="string", nullable=true),
  *     @OA\Property(property="creator_id", type="integer", example=1),
  *     @OA\Property(property="status", type="string", example="pending"),
@@ -40,6 +40,7 @@ use App\Models\BlockchainHash;
  *     @OA\Property(property="user_id", type="integer", example=2),
  *     @OA\Property(property="name", type="string", example="John Doe"),
  *     @OA\Property(property="signature_hash", type="string", example="e0b153f8883c47cf99d15bdc..."),
+ *     @OA\Property(property="hash_verified", type="boolean", example=true),
  *     @OA\Property(property="image_path", type="string", example="signatures/2/abc.png", nullable=true),
  *     @OA\Property(property="signed_at", type="string", format="date-time"),
  *     @OA\Property(property="status", type="string", example="signed")
@@ -47,7 +48,7 @@ use App\Models\BlockchainHash;
  */
 class DocumentController extends Controller
 {
-   /**
+    /**
      * @OA\Post(
      *     path="/api/documents/upload",
      *     tags={"Documents"},
@@ -128,11 +129,9 @@ class DocumentController extends Controller
         $user = $request->user();
         $file = $request->file('file');
 
-        // Simpan file
-        $uniqueName = time() . '_' . $user->id . '_' . \Str::random(8) . '.pdf';
+        $uniqueName = time() . '_' . $user->id . '_' . Str::random(8) . '.pdf';
         $filePath = $file->storeAs('documents', $uniqueName, 'public');
 
-        // Verifikasi hash file jika ada
         $hashVerified = false;
         $hash = $request->input('hash');
         if ($hash) {
@@ -141,7 +140,6 @@ class DocumentController extends Controller
             $hashVerified = ($calculatedHash === $hash);
         }
 
-        // Simpan dokumen ke database
         $document = Document::create([
             'title' => $request->title,
             'file_path' => $filePath,
@@ -151,7 +149,6 @@ class DocumentController extends Controller
             'hash_verified' => $hashVerified
         ]);
 
-        // Catat log audit
         AuditLog::create([
             'user_id' => $user->id,
             'action' => 'upload_document',
@@ -160,7 +157,6 @@ class DocumentController extends Controller
         ]);
 
         $blockchain = null;
-
         if ($hash) {
             $blockchain = $this->storeBlockchainHash([
                 'hash' => $hash,
@@ -289,22 +285,17 @@ class DocumentController extends Controller
             return response()->json(['message' => 'No active passkey found'], 403);
         }
 
-        // Upload gambar tanda tangan (jika ada)
         $path = null;
         if ($request->hasFile('signature_image')) {
             $path = $request->file('signature_image')->store("signatures/{$user->id}", 'public');
         }
 
-        // Verifikasi hash signature
         $signatureHash = $request->input('signature_hash');
         $hashVerified = false;
         if ($signatureHash) {
-            // Contoh: hash signature diverifikasi dengan public key user (implementasi sesuai kebutuhan)
-            // Di sini hanya dicek format hash, bisa dikembangkan sesuai kebutuhan
             $hashVerified = (bool) preg_match('/^[a-f0-9]{32,}$/i', $signatureHash);
         }
 
-        // Simpan ke tabel signatures
         $signature = Signature::create([
             'document_id' => $document->id,
             'user_id' => $user->id,
@@ -316,7 +307,6 @@ class DocumentController extends Controller
             'status' => 'signed'
         ]);
 
-        // Catat ke audit log
         AuditLog::create([
             'user_id' => $user->id,
             'action' => 'sign_document',
@@ -325,7 +315,6 @@ class DocumentController extends Controller
         ]);
 
         $blockchain = null;
-
         if ($signatureHash) {
             $blockchain = $this->storeBlockchainHash([
                 'hash' => $signatureHash,
