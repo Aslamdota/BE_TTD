@@ -10,7 +10,7 @@ class Document extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'file_path', 'hash', 'blockchain_tx', 'creator_id', 'status'
+        'title', 'file_path', 'hash', 'hash_verified', 'blockchain_tx', 'creator_id', 'status'
     ];
 
     public function creator()

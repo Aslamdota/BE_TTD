@@ -10,7 +10,7 @@ class Signature extends Model
     use HasFactory;
 
     protected $fillable = [
-        'document_id', 'user_id','name', 'signature_hash', 'blockchain_tx', 'signed_at', 'status', 'attempts', 'image_path'
+        'document_id', 'user_id','name', 'hash_verified', 'signature_hash', 'blockchain_tx', 'signed_at', 'status', 'attempts', 'image_path'
     ];
 
     public function document()
