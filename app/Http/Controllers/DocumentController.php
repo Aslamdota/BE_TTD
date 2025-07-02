@@ -317,20 +317,28 @@ class DocumentController extends Controller
 
         $signatureHash = $request->input('signature_hash');
         $hashVerified = false;
+        $signature = null;
+
         if ($signatureHash) {
             $hashVerified = (bool) preg_match('/^[a-f0-9]{32,}$/i', $signatureHash);
-        }
 
-        $signature = Signature::create([
-            'document_id' => $document->id,
-            'user_id' => $user->id,
-            'name' => $request->input('name'),
-            'signature_hash' => $signatureHash,
-            'hash_verified' => $hashVerified,
-            'image_path' => $path,
-            'signed_at' => now(),
-            'status' => 'signed'
-        ]);
+            // Skip jika signature_hash sudah ada
+            $existingSignature = Signature::where('signature_hash', $signatureHash)->first();
+            if ($existingSignature) {
+                $signature = $existingSignature;
+            } else {
+                $signature = Signature::create([
+                    'document_id' => $document->id,
+                    'user_id' => $user->id,
+                    'name' => $request->input('name'),
+                    'signature_hash' => $signatureHash,
+                    'hash_verified' => $hashVerified,
+                    'image_path' => $path,
+                    'signed_at' => now(),
+                    'status' => 'signed'
+                ]);
+            }
+        }
 
         AuditLog::create([
             'user_id' => $user->id,
@@ -358,6 +366,7 @@ class DocumentController extends Controller
             'hash_verified' => $hashVerified
         ]);
     }
+
 
     /**
      * @OA\Post(
