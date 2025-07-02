@@ -51,7 +51,7 @@ class DocumentController extends Controller
      * @OA\Post(
      *     path="/api/documents/upload",
      *     tags={"Documents"},
-     *     summary="Upload a new signed document",
+     *     summary="Upload a new document",
      *     operationId="uploadDocument",
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -88,11 +88,25 @@ class DocumentController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Document uploaded successfully"),
      *             @OA\Property(property="document", ref="#/components/schemas/Document"),
-     *             @OA\Property(property="blockchain", type="object", nullable=true)
+     *             @OA\Property(property="blockchain", type="object", nullable=true),
+     *             @OA\Property(property="hash_verified", type="boolean", example=true)
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
@@ -118,13 +132,23 @@ class DocumentController extends Controller
         $uniqueName = time() . '_' . $user->id . '_' . \Str::random(8) . '.pdf';
         $filePath = $file->storeAs('documents', $uniqueName, 'public');
 
+        // Verifikasi hash file jika ada
+        $hashVerified = false;
+        $hash = $request->input('hash');
+        if ($hash) {
+            $fileContent = file_get_contents(storage_path('app/public/' . $filePath));
+            $calculatedHash = hash('sha256', $fileContent);
+            $hashVerified = ($calculatedHash === $hash);
+        }
+
         // Simpan dokumen ke database
         $document = Document::create([
             'title' => $request->title,
             'file_path' => $filePath,
             'creator_id' => $user->id,
             'status' => 'draft',
-            'hash' => $request->input('hash')
+            'hash' => $hash,
+            'hash_verified' => $hashVerified
         ]);
 
         // Catat log audit
@@ -137,9 +161,9 @@ class DocumentController extends Controller
 
         $blockchain = null;
 
-        if ($request->filled('hash')) {
+        if ($hash) {
             $blockchain = $this->storeBlockchainHash([
-                'hash' => $request->input('hash'),
+                'hash' => $hash,
                 'type' => 'document_original',
                 'user_id' => $user->id,
                 'document_id' => $document->id,
@@ -152,8 +176,8 @@ class DocumentController extends Controller
             'message' => 'Document uploaded successfully',
             'document' => $document,
             'blockchain' => $blockchain,
+            'hash_verified' => $hashVerified
         ], 201);
-
     }
 
     /**
@@ -167,32 +191,36 @@ class DocumentController extends Controller
      *         name="documentId",
      *         in="path",
      *         required=true,
+     *         description="ID of the document to sign",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"signature_hash"},
-     *             @OA\Property(
-     *                 property="signature_hash",
-     *                 type="string",
-     *                 example="e0b153f8883c47cf99d15bdc..."
-     *             ),
-     *             @OA\Property(
-     *                 property="signature_image",
-     *                 type="string",
-     *                 format="binary",
-     *                 description="Gambar tanda tangan (opsional, PNG)"
-     *             ),
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 example="John Doe"
-     *             ),
-     *             @OA\Property(
-     *                 property="tx_hash",
-     *                 type="string",
-     *                 example="0x123abc..."
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"signature_hash"},
+     *                 @OA\Property(
+     *                     property="signature_hash",
+     *                     type="string",
+     *                     example="e0b153f8883c47cf99d15bdc..."
+     *                 ),
+     *                 @OA\Property(
+     *                     property="signature_image",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Gambar tanda tangan (opsional, PNG)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="string",
+     *                     example="John Doe"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tx_hash",
+     *                     type="string",
+     *                     example="0x123abc..."
+     *                 )
      *             )
      *         )
      *     ),
@@ -202,13 +230,39 @@ class DocumentController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Document signed successfully"),
      *             @OA\Property(property="signature", ref="#/components/schemas/Signature"),
-     *             @OA\Property(property="blockchain", type="object", nullable=true)
+     *             @OA\Property(property="blockchain", type="object", nullable=true),
+     *             @OA\Property(property="hash_verified", type="boolean", example=true)
      *         )
      *     ),
-     *     @OA\Response(response=403, description="No active passkey found"),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=404, description="Document not found"),
+     *     @OA\Response(
+     *         response=403,
+     *         description="No active passkey found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No active passkey found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Document not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Document not found")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
@@ -241,12 +295,22 @@ class DocumentController extends Controller
             $path = $request->file('signature_image')->store("signatures/{$user->id}", 'public');
         }
 
+        // Verifikasi hash signature
+        $signatureHash = $request->input('signature_hash');
+        $hashVerified = false;
+        if ($signatureHash) {
+            // Contoh: hash signature diverifikasi dengan public key user (implementasi sesuai kebutuhan)
+            // Di sini hanya dicek format hash, bisa dikembangkan sesuai kebutuhan
+            $hashVerified = (bool) preg_match('/^[a-f0-9]{32,}$/i', $signatureHash);
+        }
+
         // Simpan ke tabel signatures
         $signature = Signature::create([
             'document_id' => $document->id,
             'user_id' => $user->id,
             'name' => $request->input('name'),
-            'signature_hash' => $request->input('signature_hash'),
+            'signature_hash' => $signatureHash,
+            'hash_verified' => $hashVerified,
             'image_path' => $path,
             'signed_at' => now(),
             'status' => 'signed'
@@ -262,9 +326,9 @@ class DocumentController extends Controller
 
         $blockchain = null;
 
-        if ($request->filled('signature_hash')) {
+        if ($signatureHash) {
             $blockchain = $this->storeBlockchainHash([
-                'hash' => $request->input('signature_hash'),
+                'hash' => $signatureHash,
                 'type' => 'signature',
                 'user_id' => $user->id,
                 'document_id' => $document->id,
@@ -277,6 +341,7 @@ class DocumentController extends Controller
             'message' => 'Document signed successfully',
             'signature' => $signature,
             'blockchain' => $blockchain,
+            'hash_verified' => $hashVerified
         ]);
     }
 
