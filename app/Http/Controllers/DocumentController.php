@@ -195,11 +195,17 @@ class DocumentController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"signature_hash"},
+     *                 required={"signature_hash", "paraphrase"},
      *                 @OA\Property(
      *                     property="signature_hash",
      *                     type="string",
      *                     example="e0b153f8883c47cf99d15bdc..."
+     *                 ),
+     *                 @OA\Property(
+     *                     property="paraphrase",
+     *                     type="string",
+     *                     example="kata-rahasia-anda",
+     *                     description="Paraphrase passkey user (wajib untuk sign)"
      *                 ),
      *                 @OA\Property(
      *                     property="signature_image",
@@ -232,7 +238,7 @@ class DocumentController extends Controller
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="No active passkey found",
+     *         description="No active passkey found / Paraphrase salah",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="No active passkey found")
      *         )
@@ -274,7 +280,8 @@ class DocumentController extends Controller
             'signature_hash' => 'required|string|max:255',
             'signature_image' => 'nullable|image|mimes:png|max:2048',
             'name' => 'nullable|string|max:255',
-            'tx_hash' => 'nullable|string'
+            'tx_hash' => 'nullable|string',
+            'paraphrase' => 'required|string'
         ]);
 
         $user = $request->user();
@@ -283,6 +290,11 @@ class DocumentController extends Controller
         $passkey = $user->activePasskey();
         if (!$passkey) {
             return response()->json(['message' => 'No active passkey found'], 403);
+        }
+
+        // Verifikasi paraphrase
+        if (!\Hash::check($request->paraphrase, $passkey->paraphrase)) {
+            return response()->json(['message' => 'Paraphrase salah'], 403);
         }
 
         $path = null;

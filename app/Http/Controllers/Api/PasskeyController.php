@@ -39,8 +39,15 @@ class PasskeyController extends Controller
      * @OA\Post(
      *     path="/api/passkeys",
      *     tags={"Passkey"},
-     *     summary="Create new passkey (revoke old)",
+     *     summary="Create new passkey (revoke old), with paraphrase",
      *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"paraphrase"},
+     *             @OA\Property(property="paraphrase", type="string", example="kata-rahasia-anda")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Passkey created",
@@ -54,6 +61,9 @@ class PasskeyController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+        $request->validate([
+            'paraphrase' => 'required|string|min:6|max:255'
+        ]);
 
         // Revoke all old passkeys
         $user->passkeys()->where('status', 'active')->update([
@@ -84,6 +94,7 @@ class PasskeyController extends Controller
             'user_id' => $user->id,
             'public_key' => $publicKey,
             'private_key' => $privateKey,
+            'paraphrase' => bcrypt($request->paraphrase),
             'status' => 'active'
         ]);
 

@@ -2243,8 +2243,27 @@
                 "tags": [
                     "Passkey"
                 ],
-                "summary": "Create new passkey (revoke old)",
+                "summary": "Create new passkey (revoke old), with paraphrase",
                 "operationId": "4ba2fee2904b68f9990190e78c0b9957",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "paraphrase"
+                                ],
+                                "properties": {
+                                    "paraphrase": {
+                                        "type": "string",
+                                        "example": "kata-rahasia-anda"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Passkey created",
@@ -2611,12 +2630,18 @@
                         "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "signature_hash"
+                                    "signature_hash",
+                                    "paraphrase"
                                 ],
                                 "properties": {
                                     "signature_hash": {
                                         "type": "string",
                                         "example": "e0b153f8883c47cf99d15bdc..."
+                                    },
+                                    "paraphrase": {
+                                        "description": "Paraphrase passkey user (wajib untuk sign)",
+                                        "type": "string",
+                                        "example": "kata-rahasia-anda"
                                     },
                                     "signature_image": {
                                         "description": "Gambar tanda tangan (opsional, PNG)",
@@ -2666,7 +2691,7 @@
                         }
                     },
                     "403": {
-                        "description": "No active passkey found",
+                        "description": "No active passkey found / Paraphrase salah",
                         "content": {
                             "application/json": {
                                 "schema": {
