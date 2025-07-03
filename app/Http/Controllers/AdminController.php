@@ -222,7 +222,21 @@ class AdminController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User")),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="nip", type="string", example="1234567890"),
+     *                     @OA\Property(property="is_active", type="boolean", example=true),
+     *                     @OA\Property(property="roles", type="array", @OA\Items(type="string", example="admin")),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             ),
      *             @OA\Property(property="first_page_url", type="string"),
      *             @OA\Property(property="from", type="integer"),
      *             @OA\Property(property="last_page", type="integer"),
@@ -269,6 +283,65 @@ class AdminController extends Controller
         });
 
         return response()->json($users);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/admin/users/{userId}/active",
+     *     tags={"Admin"},
+     *     summary="Set user active status (aktif/nonaktif)",
+     *     operationId="setUserActiveStatus",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the user",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"is_active"},
+     *             @OA\Property(property="is_active", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User status updated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User status updated"),
+     *             @OA\Property(property="is_active", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function setUserActiveStatus(Request $request, $userId)
+    {
+        $request->validate([
+            'is_active' => 'required|boolean'
+        ]);
+        $user = User::findOrFail($userId);
+        $user->is_active = $request->is_active;
+        $user->save();
+
+        return response()->json(['message' => 'User status updated', 'is_active' => $user->is_active]);
     }
 
     /**
