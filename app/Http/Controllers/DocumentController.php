@@ -125,7 +125,6 @@ class DocumentController extends Controller
             'hash' => 'nullable|string',
             'tx_hash' => 'nullable|string'
         ]);
-        
 
         $user = $request->user();
         $file = $request->file('file');
@@ -136,17 +135,6 @@ class DocumentController extends Controller
         $hashVerified = false;
         $hash = $request->input('hash');
         $calculatedHash = null;
-
-        
-        $passkey = $user->activePasskey();
-        if (!$passkey) {
-            return response()->json(['message' => 'No active passkey found'], 403);
-        }
-
-        // Verifikasi paraphrase
-        if (!\Hash::check($request->paraphrase, $passkey->paraphrase)) {
-            return response()->json(['message' => 'Paraphrase salah'], 403);
-        }
         
         if ($hash) {
             // Ambil ulang file yang sudah di-upload
@@ -305,22 +293,11 @@ class DocumentController extends Controller
             'signature_hash' => 'required|string|max:255',
             'signature_image' => 'nullable|image|mimes:png|max:2048',
             'name' => 'nullable|string|max:255',
-            'tx_hash' => 'nullable|string',
-            'paraphrase' => 'required|string'
+            'tx_hash' => 'nullable|string'
         ]);
 
         $user = $request->user();
         $document = Document::findOrFail($documentId);
-
-        $passkey = $user->activePasskey();
-        if (!$passkey) {
-            return response()->json(['message' => 'No active passkey found'], 403);
-        }
-
-        // Verifikasi paraphrase
-        if (!\Hash::check($request->paraphrase, $passkey->paraphrase)) {
-            return response()->json(['message' => 'Paraphrase salah'], 403);
-        }
 
         $path = null;
         if ($request->hasFile('signature_image')) {

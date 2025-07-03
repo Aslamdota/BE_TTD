@@ -48,6 +48,8 @@ Route::prefix('auth')->group(function () {
         Route::get('/passkeys', [PasskeyController::class, 'index']);
         Route::post('/passkeys', [PasskeyController::class, 'store']);
         Route::put('/passkeys/{id}/revoke', [PasskeyController::class, 'revoke']);
+
+        Route::post('/checkParaphase', [PasskeyController::class, 'checkParaphase']);
     });
 });
 

@@ -144,4 +144,20 @@ class PasskeyController extends Controller
 
         return response()->json(['message' => 'Passkey revoked']);
     }
+
+    public function checkParaphase(Request $request)
+    {
+        $request->validate([
+            'paraphrase' => 'required|string'
+        ]);
+
+        $passkey = $user->activePasskey();
+        if (!$passkey) {
+            return response()->json(['message' => 'No active passkey found'], 403);
+        }
+
+        if (!\Hash::check($request->paraphrase, $passkey->paraphrase)) {
+            return response()->json(['message' => 'Paraphrase salah'], 403);
+        }
+    }
 }
