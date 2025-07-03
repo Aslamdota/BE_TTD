@@ -2644,6 +2644,31 @@
                                         "hash_verified": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "audit_log": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "action": {
+                                                    "type": "string",
+                                                    "example": "upload_document"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Upload dokumen: Contoh Dokumen"
+                                                },
+                                                "ip_address": {
+                                                    "type": "string",
+                                                    "example": "127.0.0.1"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2787,6 +2812,31 @@
                                         "hash_verified": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "audit_log": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "action": {
+                                                    "type": "string",
+                                                    "example": "sign_document"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Sign document: Contoh Dokumen"
+                                                },
+                                                "ip_address": {
+                                                    "type": "string",
+                                                    "example": "127.0.0.1"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

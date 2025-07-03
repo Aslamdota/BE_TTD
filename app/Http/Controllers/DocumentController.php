@@ -90,7 +90,16 @@ class DocumentController extends Controller
      *             @OA\Property(property="message", type="string", example="Document uploaded successfully"),
      *             @OA\Property(property="document", ref="#/components/schemas/Document"),
      *             @OA\Property(property="blockchain", type="object", nullable=true),
-     *             @OA\Property(property="hash_verified", type="boolean", example=true)
+     *             @OA\Property(property="hash_verified", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="audit_log",
+     *                 type="object",
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="action", type="string", example="upload_document"),
+     *                 @OA\Property(property="description", type="string", example="Upload dokumen: Contoh Dokumen"),
+     *                 @OA\Property(property="ip_address", type="string", example="127.0.0.1")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -164,6 +173,7 @@ class DocumentController extends Controller
 
         AuditLog::create([
             'user_id' => $user->id,
+            'name' => $user->name,
             'action' => 'upload_document',
             'description' => 'Upload dokumen: ' . $document->title,
             'ip_address' => $request->ip()
@@ -181,11 +191,21 @@ class DocumentController extends Controller
             ]);
         }
 
+        $auditLog = AuditLog::create([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'action' => 'upload_document',
+            'description' => 'Upload dokumen: ' . $document->title,
+            'ip_address' => $request->ip()
+        ]);
+
+        // Pada response:
         return response()->json([
             'message' => 'Document uploaded successfully',
             'document' => $document,
             'blockchain' => $blockchain,
-            'hash_verified' => $hashVerified
+            'hash_verified' => $hashVerified,
+            'audit_log' => $auditLog
         ], 201);
     }
 
@@ -246,7 +266,16 @@ class DocumentController extends Controller
      *             @OA\Property(property="message", type="string", example="Document signed successfully"),
      *             @OA\Property(property="signature", ref="#/components/schemas/Signature"),
      *             @OA\Property(property="blockchain", type="object", nullable=true),
-     *             @OA\Property(property="hash_verified", type="boolean", example=true)
+     *             @OA\Property(property="hash_verified", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="audit_log",
+     *                 type="object",
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="action", type="string", example="sign_document"),
+     *                 @OA\Property(property="description", type="string", example="Sign document: Contoh Dokumen"),
+     *                 @OA\Property(property="ip_address", type="string", example="127.0.0.1")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -331,6 +360,7 @@ class DocumentController extends Controller
 
         AuditLog::create([
             'user_id' => $user->id,
+            'name' => $user->name,
             'action' => 'sign_document',
             'description' => 'Sign document: ' . $document->title,
             'ip_address' => $request->ip()

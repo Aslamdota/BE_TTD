@@ -153,7 +153,7 @@ class AdminController extends Controller
      */
     public function auditLogs(Request $request)
     {
-        $logs = AuditLog::with('user:id,name,email')
+        $logs = AuditLog::select('id', 'user_id', 'name', 'action', 'description', 'created_at')
             ->orderByDesc('created_at')
             ->paginate($request->per_page ?? 10);
 
@@ -919,14 +919,14 @@ class AdminController extends Controller
         try {
             Excel::import(new DosenImport, $request->file('file'));
             return response()->json(['message' => 'Import dosen berhasil'], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['message' => 'Import gagal', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function listCertificates()
     {
-        return response()->json(\App\Models\Certificate::with('user')->get());
+        return response()->json(Certificate::with('user')->get());
     }
 
     public function createCertificate(Request $request)
@@ -938,7 +938,7 @@ class AdminController extends Controller
             'valid_from' => 'required|date',
             'valid_to' => 'required|date|after:valid_from',
         ]);
-        $cert = \App\Models\Certificate::create($request->all());
+        $cert = Certificate::create($request->all());
         return response()->json(['message' => 'Certificate created', 'certificate' => $cert], 201);
     }
 }
