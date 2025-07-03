@@ -206,6 +206,26 @@
                             "type": "integer",
                             "default": 10
                         }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search keyword (by name, email, or nip)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "User active status: '1' for active, '0' for inactive",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "1",
+                                "0"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
