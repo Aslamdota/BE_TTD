@@ -16,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append([
+        $middleware->prepend([
+            'cors.options',
             HandleCors::class,
         ]);
 
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'swagger.protect' => \App\Http\Middleware\SwaggerProtect::class,
+            'cors.options' => \App\Http\Middleware\CorsOptions::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
