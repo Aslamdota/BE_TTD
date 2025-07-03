@@ -101,6 +101,7 @@ Route::prefix('admin')
     Route::delete('/users/{userId}', [AdminController::class, 'deleteUser']);
     Route::put('/users/{userId}/password', [AdminController::class, 'adminChangeUserPassword']);
     Route::post('/import-dosen', [AdminController::class, 'importDosen']);
+    Route::put('/users/{userId}/active', [AdminController::class, 'setUserActiveStatus']);
 
     // Role Management
     Route::get('/roles', [AdminController::class, 'listRoles']);
