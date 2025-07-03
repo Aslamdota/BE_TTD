@@ -125,6 +125,7 @@ class DocumentController extends Controller
             'hash' => 'nullable|string',
             'tx_hash' => 'nullable|string'
         ]);
+        
 
         $user = $request->user();
         $file = $request->file('file');
@@ -136,6 +137,17 @@ class DocumentController extends Controller
         $hash = $request->input('hash');
         $calculatedHash = null;
 
+        
+        $passkey = $user->activePasskey();
+        if (!$passkey) {
+            return response()->json(['message' => 'No active passkey found'], 403);
+        }
+
+        // Verifikasi paraphrase
+        if (!\Hash::check($request->paraphrase, $passkey->paraphrase)) {
+            return response()->json(['message' => 'Paraphrase salah'], 403);
+        }
+        
         if ($hash) {
             // Ambil ulang file yang sudah di-upload
             $fileContent = file_get_contents(storage_path('app/public/' . $filePath));
