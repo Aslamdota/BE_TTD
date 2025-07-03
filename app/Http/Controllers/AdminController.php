@@ -453,7 +453,14 @@ class AdminController extends Controller
      */
     public function deleteUser($userId)
     {
-        $user = User::findOrFail($userId);
+        $user = User::with('roles')->findOrFail($userId);
+
+        if ($user->roles->contains('name', 'admin')) {
+            return response()->json([
+                'message' => 'User dengan role admin tidak dapat dihapus.'
+            ], 403);
+        }
+
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
