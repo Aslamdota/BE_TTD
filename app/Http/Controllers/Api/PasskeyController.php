@@ -151,6 +151,7 @@ class PasskeyController extends Controller
             'paraphrase' => 'required|string'
         ]);
 
+        $user = $request->user();
         $passkey = $user->activePasskey();
         if (!$passkey) {
             return response()->json(['message' => 'No active passkey found'], 403);
