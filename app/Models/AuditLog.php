@@ -7,7 +7,7 @@ use App\Models\User;
 
 class AuditLog extends Model
 {
-    protected $fillable = ['user_id', 'name', 'action', 'description', 'ip_address'];
+    protected $fillable = ['user_id', 'action', 'description', 'ip_address'];
 
     public function user()
     {

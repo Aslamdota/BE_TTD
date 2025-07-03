@@ -146,16 +146,53 @@ class AdminController extends Controller
      *         response=200,
      *         description="Audit logs",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=2),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="action", type="string", example="upload_document"),
+     *                     @OA\Property(property="description", type="string", example="Upload dokumen: Contoh Dokumen"),
+     *                     @OA\Property(property="ip_address", type="string", example="127.0.0.1"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-03T10:00:00Z")
+     *                 )
+     *             ),
+     *             @OA\Property(property="first_page_url", type="string"),
+     *             @OA\Property(property="from", type="integer"),
+     *             @OA\Property(property="last_page", type="integer"),
+     *             @OA\Property(property="last_page_url", type="string"),
+     *             @OA\Property(property="next_page_url", type="string", nullable=true),
+     *             @OA\Property(property="path", type="string"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="prev_page_url", type="string", nullable=true),
+     *             @OA\Property(property="to", type="integer"),
+     *             @OA\Property(property="total", type="integer")
      *         )
      *     )
      * )
      */
     public function auditLogs(Request $request)
     {
-        $logs = AuditLog::select('id', 'user_id', 'name', 'action', 'description', 'created_at')
+        $logs = AuditLog::with('user:id,name')
             ->orderByDesc('created_at')
             ->paginate($request->per_page ?? 10);
+
+        // Format response agar ada user_id dan name
+        $logs->getCollection()->transform(function ($log) {
+            return [
+                'id' => $log->id,
+                'user_id' => $log->user_id,
+                'name' => $log->user ? $log->user->name : null,
+                'action' => $log->action,
+                'description' => $log->description,
+                'ip_address' => $log->ip_address,
+                'created_at' => $log->created_at,
+            ];
+        });
 
         return response()->json($logs);
     }

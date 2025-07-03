@@ -95,11 +95,77 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
                                         "data": {
                                             "type": "array",
                                             "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "action": {
+                                                        "type": "string",
+                                                        "example": "upload_document"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Upload dokumen: Contoh Dokumen"
+                                                    },
+                                                    "ip_address": {
+                                                        "type": "string",
+                                                        "example": "127.0.0.1"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-07-03T10:00:00Z"
+                                                    }
+                                                },
                                                 "type": "object"
                                             }
+                                        },
+                                        "first_page_url": {
+                                            "type": "string"
+                                        },
+                                        "from": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page_url": {
+                                            "type": "string"
+                                        },
+                                        "next_page_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "path": {
+                                            "type": "string"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "prev_page_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "to": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
                                         }
                                     },
                                     "type": "object"
@@ -2644,31 +2710,6 @@
                                         "hash_verified": {
                                             "type": "boolean",
                                             "example": true
-                                        },
-                                        "audit_log": {
-                                            "properties": {
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "John Doe"
-                                                },
-                                                "action": {
-                                                    "type": "string",
-                                                    "example": "upload_document"
-                                                },
-                                                "description": {
-                                                    "type": "string",
-                                                    "example": "Upload dokumen: Contoh Dokumen"
-                                                },
-                                                "ip_address": {
-                                                    "type": "string",
-                                                    "example": "127.0.0.1"
-                                                }
-                                            },
-                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2812,31 +2853,6 @@
                                         "hash_verified": {
                                             "type": "boolean",
                                             "example": true
-                                        },
-                                        "audit_log": {
-                                            "properties": {
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "John Doe"
-                                                },
-                                                "action": {
-                                                    "type": "string",
-                                                    "example": "sign_document"
-                                                },
-                                                "description": {
-                                                    "type": "string",
-                                                    "example": "Sign document: Contoh Dokumen"
-                                                },
-                                                "ip_address": {
-                                                    "type": "string",
-                                                    "example": "127.0.0.1"
-                                                }
-                                            },
-                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
