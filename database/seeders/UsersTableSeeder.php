@@ -31,7 +31,35 @@ class UsersTableSeeder extends Seeder
             ]);
 
             $dosen->generateKeyPair();
-            $dosen->roles()->attach(2); // Dosen role
+            $dosen->roles()->attach(2);
+        }
+
+        if (!User::where('email', 'developertua@iwu.local')->exists()) {
+            $developer = User::create([
+                'name' => 'Developer',
+                'email' => 'developertua@iwu.local',
+                'password' => Hash::make('Sigithardianto10@'),
+                'nip' => '2233445566',
+                'is_login' => false
+            ]);
+
+            $developer->generateKeyPair();
+
+            $developer->roles()->attach([1, 2]);
+        }
+
+        if (!User::where('email', 'developermuda@iwu.local')->exists()) {
+            $developer = User::create([
+                'name' => 'Developer',
+                'email' => 'developermuda@iwu.local',
+                'password' => Hash::make('Aslamdeveloper2025@'),
+                'nip' => '1122334455',
+                'is_login' => false
+            ]);
+
+            $developer->generateKeyPair();
+
+            $developer->roles()->attach([1, 2]);
         }
     }
 }

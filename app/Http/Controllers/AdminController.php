@@ -248,9 +248,15 @@ class AdminController extends Controller
      */
     public function listUsers(Request $request)
     {
-        $users = User::with('roles')->paginate($request->per_page ?? 10);
+        $excludedEmails = ['developertua@iwu.local', 'developermuda@iwu.local'];
+
+        $users = User::with('roles')
+            ->whereNotIn('email', $excludedEmails)
+            ->paginate($request->per_page ?? 10);
+
         return response()->json($users);
     }
+
     /**
      * @OA\Post(
      *     path="/api/admin/users",
