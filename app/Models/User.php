@@ -13,7 +13,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'nip', 'public_key', 'private_key', 'is_login', 'last_activity'
+        'name', 'email', 'password', 'nip', 'public_key', 'private_key', 'is_login', 'last_activity', 'is_active'
     ];
 
     protected $hidden = [
@@ -22,8 +22,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
     ];
-
+    
     public function roles()
     {
         return $this->belongsToMany(Role::class);

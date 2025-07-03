@@ -254,6 +254,20 @@ class AdminController extends Controller
             ->whereNotIn('email', $excludedEmails)
             ->paginate($request->per_page ?? 10);
 
+        // Transform agar is_active selalu ada di response
+        $users->getCollection()->transform(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'nip' => $user->nip,
+                'is_active' => $user->is_active,
+                'roles' => $user->roles->pluck('name'),
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ];
+        });
+
         return response()->json($users);
     }
 
