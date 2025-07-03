@@ -1,11 +1,14 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'storage/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
     
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'https://virsign.netlify.app',
+        'http://localhost:5173'
+    ],
 
     'allowed_origins_patterns' => [],
 
@@ -16,5 +19,4 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => true,
-
 ];
