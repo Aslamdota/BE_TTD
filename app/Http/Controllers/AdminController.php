@@ -197,7 +197,7 @@ class AdminController extends Controller
         return response()->json($logs);
     }
 
-    /**
+   /**
      * @OA\Get(
      *     path="/api/admin/users",
      *     tags={"Admin"},
@@ -215,6 +215,18 @@ class AdminController extends Controller
      *         in="query",
      *         description="Items per page",
      *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search keyword (by name, email, or nip)",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="User active status: '1' for active, '0' for inactive",
+     *         @OA\Schema(type="string", enum={"1", "0"})
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -264,18 +276,33 @@ class AdminController extends Controller
     {
         $excludedEmails = ['developertua@iwu.local', 'developermuda@iwu.local'];
 
-        $users = User::with('roles')
-            ->whereNotIn('email', $excludedEmails)
-            ->paginate($request->per_page ?? 10);
+        $query = User::with('roles')
+            ->whereNotIn('email', $excludedEmails);
 
-        // Transform agar is_active selalu ada di response
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                ->orWhere('email', 'like', "%$search%")
+                ->orWhere('nip', 'like', "%$search%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if (in_array($status, ['0', '1'], true)) {
+                $query->where('is_active', $status);
+            }
+        }
+
+        $users = $query->paginate($request->per_page ?? 10);
+
         $users->getCollection()->transform(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'nip' => $user->nip,
-                'is_active' => $user->is_active,
+                'is_active' => (bool) $user->is_active,
                 'roles' => $user->roles->pluck('name'),
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
@@ -284,6 +311,7 @@ class AdminController extends Controller
 
         return response()->json($users);
     }
+
 
     /**
      * @OA\Put(
