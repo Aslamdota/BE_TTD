@@ -16,10 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend([
-            'cors.options',
-            HandleCors::class,
-        ]);
+        $middleware->prepend([]);
 
         $middleware->group('api', [
             HandleCors::class,
