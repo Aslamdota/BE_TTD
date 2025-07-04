@@ -178,17 +178,17 @@ class AdminController extends Controller
     public function auditLogs(Request $request)
     {
         $logs = AuditLog::join('users', 'audit_logs.user_id', '=', 'users.id')
-        ->select('
+        ->select(DB::raw("
             audit_logs.id,
             users.name,
             audit_logs.action,
             audit_logs.description,
             audit_logs.ip_address,
             audit_logs.created_at
-        ')
+        "))
         ->orderBy('audit_logs.created_at', 'DESC')
-        ->paginate($request->per_page ?? 10)
-        ->get();
+        ->paginate($request->per_page ?? 10);
+
 
         // $logs = AuditLog::with('user:id,name')
         //     ->orderByDesc('created_at')
