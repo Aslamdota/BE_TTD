@@ -15,9 +15,8 @@ class AuditTrail
         if (Auth::check()) {
             $user = Auth::user();
             $data = $request->except(['password', 'password_confirmation', 'token']);
-            AuditLog::create([
+            \App\Models\AuditLog::create([
                 'user_id' => $user->id,
-                'name' => $user->name,
                 'action' => $request->method().' '.$request->path(),
                 'description' => json_encode($data),
                 'ip_address' => $request->ip()

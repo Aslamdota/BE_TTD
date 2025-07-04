@@ -135,7 +135,7 @@ class DocumentController extends Controller
         $hashVerified = false;
         $hash = $request->input('hash');
         $calculatedHash = null;
-        
+
         if ($hash) {
             // Ambil ulang file yang sudah di-upload
             $fileContent = file_get_contents(storage_path('app/public/' . $filePath));
@@ -470,7 +470,15 @@ class DocumentController extends Controller
      */
     public function list(Request $request)
     {
-        // Implementasi method list seperti sebelumnya
+        $user = $request->user();
+
+        $perPage = $request->input('per_page', 10);
+
+        $documents = \App\Models\Document::where('creator_id', $user->id)
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+
+        return response()->json($documents);
     }
 
     /**
@@ -578,6 +586,47 @@ class DocumentController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/public/documents/{id}/download",
+     *     tags={"Documents"},
+     *     summary="Download public document by ID",
+     *     operationId="publicDownload",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Document ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="File download"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Document not found"
+     *     )
+     * )
+     */
+    public function publicDownload($id)
+    {
+        $document = \App\Models\Document::find($id);
+        if (!$document) {
+            return response()->json(['message' => 'Document not found'], 404);
+        }
+
+        if ($search = $request->input('search')) {
+            $documents->where('title', 'like', "%$search%");
+        }
+
+        $filePath = storage_path('app/public/' . $document->file_path);
+        if (!file_exists($filePath)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        return response()->download($filePath, $document->title . '.pdf');
+    }
 
     private function storeBlockchainHash(array $data)
     {

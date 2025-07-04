@@ -177,11 +177,10 @@ class AdminController extends Controller
      */
     public function auditLogs(Request $request)
     {
-        $logs = AuditLog::with('user:id,name')
+        $logs = \App\Models\AuditLog::with('user:id,name')
             ->orderByDesc('created_at')
             ->paginate($request->per_page ?? 10);
 
-        // Format response agar ada user_id dan name
         $logs->getCollection()->transform(function ($log) {
             return [
                 'id' => $log->id,
