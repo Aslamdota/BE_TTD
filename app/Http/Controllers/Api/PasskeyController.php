@@ -153,6 +153,7 @@ class PasskeyController extends Controller
 
         $user = $request->user();
         $passkey = $user->activePasskey();
+
         if (!$passkey) {
             return response()->json(['message' => 'No active passkey found'], 403);
         }
@@ -160,5 +161,11 @@ class PasskeyController extends Controller
         if (!\Hash::check($request->paraphrase, $passkey->paraphrase)) {
             return response()->json(['message' => 'Paraphrase salah'], 403);
         }
+
+        return response()->json([
+            'message' => 'Paraphrase valid',
+            'paraphase' => true,
+        ]);
+
     }
 }
