@@ -634,9 +634,10 @@ class DocumentController extends Controller
 
         $filename = $document->title . '.pdf';
 
-        return response()->download($filePath, $filename, [
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        return response()->streamDownload(function () use ($filePath) {
+            readfile($filePath);
+        });
+
     }
 
     public function listDocument(Request $request)
