@@ -137,18 +137,29 @@ class DocumentController extends Controller
         $calculatedHash = null;
 
         if ($hash) {
-            // Ambil ulang file yang sudah di-upload
-            $fileContent = file_get_contents(storage_path('app/public/' . $filePath));
-            $calculatedHash = hash('sha256', $fileContent);
-            $hashVerified = ($calculatedHash === $hash);
+            try {
+                $fileContent = file_get_contents($file->getRealPath());
 
-            // Logging untuk debug jika hash tidak cocok
-            if (!$hashVerified) {
-                \Log::warning('Hash mismatch on upload', [
+                $calculatedHash = hash('sha256', $fileContent);
+
+                $normalizedFrontendHash = strtolower(preg_replace('/^0x/', '', $hash));
+                $normalizedBackendHash = strtolower($calculatedHash);
+
+                $hashVerified = ($normalizedFrontendHash === $normalizedBackendHash);
+
+                if (!$hashVerified) {
+                    Log::warning('Hash mismatch on upload', [
+                        'user_id' => $user->id,
+                        'frontend_hash' => $hash,
+                        'normalized_frontend_hash' => $normalizedFrontendHash,
+                        'backend_hash' => $calculatedHash,
+                        'file_path' => $filePath,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error during hash verification', [
                     'user_id' => $user->id,
-                    'frontend_hash' => $hash,
-                    'backend_hash' => $calculatedHash,
-                    'file_path' => $filePath,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
