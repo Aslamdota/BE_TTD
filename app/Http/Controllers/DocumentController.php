@@ -609,7 +609,7 @@ class DocumentController extends Controller
      *     )
      * )
      */
-    public function publicDownload($id)
+    public function publicDownload(Request $request, $id)
     {
         $document = \App\Models\Document::find($id);
         if (!$document) {
@@ -628,7 +628,7 @@ class DocumentController extends Controller
         return response()->download($filePath, $document->title . '.pdf');
     }
 
-    public function listDocument()
+    public function listDocument(Request $request)
     {
         $perPage = $request->input('per_page', 10);
 
