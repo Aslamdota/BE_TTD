@@ -632,7 +632,11 @@ class DocumentController extends Controller
             return response()->json(['message' => 'File not found'], 404);
         }
 
-        return response()->download($filePath, $document->title . '.pdf');
+        $filename = $document->title . '.pdf';
+
+        return response()->download($filePath, $filename, [
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     public function listDocument(Request $request)
