@@ -79,8 +79,22 @@ class AdminController extends Controller
      * @OA\Get(
      *     path="/api/admin/dashboard",
      *     tags={"Admin"},
-     *     summary="Get dashboard summary for admin",
+     *     summary="Get dashboard summary for admin (per bulan & tahun)",
      *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="month",
+     *         in="query",
+     *         required=false,
+     *         description="Bulan (1-12), default: bulan sekarang",
+     *         @OA\Schema(type="integer", example=7)
+     *     ),
+     *     @OA\Parameter(
+     *         name="year",
+     *         in="query",
+     *         required=false,
+     *         description="Tahun (YYYY), default: tahun sekarang",
+     *         @OA\Schema(type="integer", example=2025)
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Dashboard summary",
@@ -89,30 +103,51 @@ class AdminController extends Controller
      *             @OA\Property(property="total_documents", type="integer"),
      *             @OA\Property(property="total_signatures", type="integer"),
      *             @OA\Property(property="total_verified_documents", type="integer"),
-     *             @OA\Property(property="bar_chart", type="array", @OA\Items(type="object")),
-     *             @OA\Property(property="pie_chart", type="array", @OA\Items(type="object"))
+     *             @OA\Property(
+     *                 property="bar_chart",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="date", type="string", example="2025-07-01"),
+     *                     @OA\Property(property="total", type="integer", example=5)
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="pie_chart",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="status", type="string", example="signed"),
+     *                     @OA\Property(property="total", type="integer", example=10)
+     *                 )
+     *             )
      *         )
      *     )
      * )
      */
-    public function dashboardSummary()
+    public function dashboardSummary(Request $request)
     {
+        // Ambil bulan dan tahun dari query, default ke bulan & tahun sekarang
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
+
         // Total
         $totalUsers = User::count();
         $totalDocuments = Document::count();
         $totalSignatures = Signature::where('status', 'signed')->count();
         $totalVerifiedDocuments = Document::where('hash_verified', true)->count();
 
-        // Bar chart: aktivitas dokumen per hari 7 hari terakhir
+        // Bar chart: aktivitas dokumen per hari di bulan & tahun yang dipilih
         $barChart = AuditLog::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
             ->where('action', 'like', '%document%')
-            ->where('created_at', '>=', now()->subDays(7))
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
-        // Pie chart: distribusi status dokumen
+        // Pie chart: distribusi status dokumen di bulan & tahun yang dipilih
         $pieChart = Document::select('status', DB::raw('count(*) as total'))
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
             ->groupBy('status')
             ->get();
 
@@ -123,6 +158,8 @@ class AdminController extends Controller
             'total_verified_documents' => $totalVerifiedDocuments,
             'bar_chart' => $barChart,
             'pie_chart' => $pieChart,
+            'month' => (int)$month,
+            'year' => (int)$year,
         ]);
     }
 
