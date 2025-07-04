@@ -13,11 +13,19 @@ class SignatureController extends Controller
      *     path="/api/signatures",
      *     tags={"Signature"},
      *     summary="List all signatures for current user",
+     *     operationId="listSignatures",
      *     security={{"sanctum":{}}},
      *     @OA\Response(
      *         response=200,
      *         description="List of signatures",
-     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Signature"))
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Signature")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
      *     )
      * )
      */
@@ -37,11 +45,13 @@ class SignatureController extends Controller
      *     path="/api/signatures/{id}",
      *     tags={"Signature"},
      *     summary="Get signature detail",
+     *     operationId="showSignature",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *         description="Signature ID",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
@@ -51,7 +61,14 @@ class SignatureController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Signature not found"
+     *         description="Signature not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Signature not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
      *     )
      * )
      */
@@ -74,20 +91,29 @@ class SignatureController extends Controller
      *     path="/api/signatures/{id}/download",
      *     tags={"Signature"},
      *     summary="Download signature image",
+     *     operationId="downloadSignature",
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *         description="Signature ID",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Signature image file"
+     *         description="Signature image file (PNG or JPG)"
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Signature or file not found"
+     *         description="Signature or file not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Signature or file not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized"
      *     )
      * )
      */

@@ -3465,7 +3465,7 @@
                     "Signature"
                 ],
                 "summary": "List all signatures for current user",
-                "operationId": "c2c7908d383dda4b41a4d1b39832a6c6",
+                "operationId": "listSignatures",
                 "responses": {
                     "200": {
                         "description": "List of signatures",
@@ -3479,6 +3479,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 },
                 "security": [
@@ -3494,11 +3497,12 @@
                     "Signature"
                 ],
                 "summary": "Get signature detail",
-                "operationId": "de9ef9739610e2332c8816140046f708",
+                "operationId": "showSignature",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Signature ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -3517,7 +3521,23 @@
                         }
                     },
                     "404": {
-                        "description": "Signature not found"
+                        "description": "Signature not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Signature not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 },
                 "security": [
@@ -3533,11 +3553,12 @@
                     "Signature"
                 ],
                 "summary": "Download signature image",
-                "operationId": "ee732b5aa4e9d3f50301f80bc80ae170",
+                "operationId": "downloadSignature",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Signature ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -3546,10 +3567,26 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Signature image file"
+                        "description": "Signature image file (PNG or JPG)"
                     },
                     "404": {
-                        "description": "Signature or file not found"
+                        "description": "Signature or file not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Signature or file not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 },
                 "security": [
