@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PasskeyController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
+use App\Http\Controllers\SignatureController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -158,7 +159,7 @@ Route::get('/public/documents/{id}/download', [DocumentController::class, 'publi
 Route::middleware('auth:sanctum')->get('/test', [ApiKeyController::class, 'test']);
 
 Route::middleware(['auth:sanctum'])->prefix('signatures')->group(function () {
-    Route::get('/', [\App\Http\Controllers\SignatureController::class, 'index']); // List all signatures for current user
-    Route::get('/{id}', [\App\Http\Controllers\SignatureController::class, 'show']); // View detail signature
-    Route::get('/{id}/download', [\App\Http\Controllers\SignatureController::class, 'download']); // Download signature image
+    Route::get('/', [SignatureController::class, 'index']); // List all signatures for current user
+    Route::get('/{id}', [SignatureController::class, 'show']); // View detail signature
+    Route::get('/{id}/download', [SignatureController::class, 'download']); // Download signature image
 });
