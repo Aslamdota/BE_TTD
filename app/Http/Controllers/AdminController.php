@@ -566,15 +566,24 @@ class AdminController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Unauthorized"
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Forbidden"
+     *         description="Forbidden (cannot delete admin or yourself)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User dengan role admin tidak dapat dihapus.")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="User not found"
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
      *     )
      * )
      */
@@ -582,9 +591,17 @@ class AdminController extends Controller
     {
         $user = User::with('roles')->findOrFail($userId);
 
+        // Cegah hapus user dengan role admin
         if ($user->roles->contains('name', 'admin')) {
             return response()->json([
                 'message' => 'User dengan role admin tidak dapat dihapus.'
+            ], 403);
+        }
+
+        // Optional: Cek jika user adalah diri sendiri
+        if (auth()->id() == $user->id) {
+            return response()->json([
+                'message' => 'Anda tidak dapat menghapus akun Anda sendiri.'
             ], 403);
         }
 
