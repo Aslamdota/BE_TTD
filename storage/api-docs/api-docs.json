@@ -3458,6 +3458,106 @@
                     }
                 }
             }
+        },
+        "/api/signatures": {
+            "get": {
+                "tags": [
+                    "Signature"
+                ],
+                "summary": "List all signatures for current user",
+                "operationId": "c2c7908d383dda4b41a4d1b39832a6c6",
+                "responses": {
+                    "200": {
+                        "description": "List of signatures",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Signature"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/signatures/{id}": {
+            "get": {
+                "tags": [
+                    "Signature"
+                ],
+                "summary": "Get signature detail",
+                "operationId": "de9ef9739610e2332c8816140046f708",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Signature detail",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Signature"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Signature not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/signatures/{id}/download": {
+            "get": {
+                "tags": [
+                    "Signature"
+                ],
+                "summary": "Download signature image",
+                "operationId": "ee732b5aa4e9d3f50301f80bc80ae170",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Signature image file"
+                    },
+                    "404": {
+                        "description": "Signature or file not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -3723,6 +3823,10 @@
         {
             "name": "Passkey",
             "description": "Passkey"
+        },
+        {
+            "name": "Signature",
+            "description": "Signature"
         }
     ]
 }
