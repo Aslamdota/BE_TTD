@@ -147,6 +147,7 @@ Route::get('/signature-proxy/{userId}/{filename}', function ($userId, $filename)
         ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, Authorization');
 });
+
 // Public route untuk download dokumen
 Route::get('/public/documents', [DocumentController::class, 'listDocument']);
 Route::get('/public/documents/{id}/download', [DocumentController::class, 'publicDownload']);
@@ -155,3 +156,9 @@ Route::get('/public/documents/{id}/download', [DocumentController::class, 'publi
 | TEST ROUTE
 |------------------------------------------*/
 Route::middleware('auth:sanctum')->get('/test', [ApiKeyController::class, 'test']);
+
+Route::middleware(['auth:sanctum'])->prefix('signatures')->group(function () {
+    Route::get('/', [\App\Http\Controllers\SignatureController::class, 'index']); // List all signatures for current user
+    Route::get('/{id}', [\App\Http\Controllers\SignatureController::class, 'show']); // View detail signature
+    Route::get('/{id}/download', [\App\Http\Controllers\SignatureController::class, 'download']); // Download signature image
+});
