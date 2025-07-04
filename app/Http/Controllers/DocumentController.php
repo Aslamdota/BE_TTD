@@ -616,10 +616,6 @@ class DocumentController extends Controller
             return response()->json(['message' => 'Document not found'], 404);
         }
 
-        if ($search = $request->input('search')) {
-            $documents->where('title', 'like', "%$search%");
-        }
-
         $filePath = storage_path('app/public/' . $document->file_path);
         if (!file_exists($filePath)) {
             return response()->json(['message' => 'File not found'], 404);
