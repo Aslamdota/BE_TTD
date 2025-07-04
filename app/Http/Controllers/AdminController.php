@@ -177,21 +177,34 @@ class AdminController extends Controller
      */
     public function auditLogs(Request $request)
     {
-        $logs = AuditLog::with('user')
-            ->orderByDesc('created_at')
-            ->paginate($request->per_page ?? 10);
+        $logs = AuditLog::join('users', 'audit_logs.user_id', '=', 'users.id')
+        ->select('
+            audit_logs.id,
+            users.name,
+            audit_logs.action,
+            audit_logs.description,
+            audit_logs.ip_address,
+            audit_logs.created_at
+        ')
+        ->orderBy('audit_logs.created_at', 'DESC')
+        ->paginate($request->per_page ?? 10)
+        ->get();
 
-        $logs->getCollection()->transform(function ($log) {
-            return [
-                'id' => $log->id,
-                'user_id' => $log->user_id,
-                'name' => $log->user ? $log->user->name : null,
-                'action' => $log->action,
-                'description' => $log->description,
-                'ip_address' => $log->ip_address,
-                'created_at' => $log->created_at,
-            ];
-        });
+        // $logs = AuditLog::with('user:id,name')
+        //     ->orderByDesc('created_at')
+        //     ->paginate($request->per_page ?? 10);
+
+        // $logs->getCollection()->transform(function ($log) {
+        //     return [
+        //         'id' => $log->id,
+        //         'user_id' => $log->user_id,
+        //         'name' => $log->user ? $log->user->name : null,
+        //         'action' => $log->action,
+        //         'description' => $log->description,
+        //         'ip_address' => $log->ip_address,
+        //         'created_at' => $log->created_at,
+        //     ];
+        // });
 
         return response()->json($logs);
     }
