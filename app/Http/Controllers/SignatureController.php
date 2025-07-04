@@ -133,9 +133,10 @@ class SignatureController extends Controller
 
         $file = Storage::disk('public')->get($path);
         $mime = Storage::disk('public')->mimeType($path);
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
 
         return response($file, 200)
             ->header('Content-Type', $mime)
-            ->header('Content-Disposition', 'attachment; filename="signature_'.$signature->id.'.png"');
+            ->header('Content-Disposition', 'attachment; filename="signature_'.$signature->id.'.'.$ext.'"');
     }
 }
