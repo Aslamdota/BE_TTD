@@ -16,8 +16,30 @@
                 "tags": [
                     "Admin"
                 ],
-                "summary": "Get dashboard summary for admin",
+                "summary": "Get dashboard summary for admin (per bulan & tahun)",
                 "operationId": "0c07b57c2f35a47cf1f24855b766f652",
+                "parameters": [
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "description": "Bulan (1-12), default: bulan sekarang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "description": "Tahun (YYYY), default: tahun sekarang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2025
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Dashboard summary",
@@ -40,12 +62,32 @@
                                         "bar_chart": {
                                             "type": "array",
                                             "items": {
+                                                "properties": {
+                                                    "date": {
+                                                        "type": "string",
+                                                        "example": "2025-07-01"
+                                                    },
+                                                    "total": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    }
+                                                },
                                                 "type": "object"
                                             }
                                         },
                                         "pie_chart": {
                                             "type": "array",
                                             "items": {
+                                                "properties": {
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "signed"
+                                                    },
+                                                    "total": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    }
+                                                },
                                                 "type": "object"
                                             }
                                         }
