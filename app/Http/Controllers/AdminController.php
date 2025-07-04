@@ -177,7 +177,7 @@ class AdminController extends Controller
      */
     public function auditLogs(Request $request)
     {
-        $logs = \App\Models\AuditLog::with('user:id,name')
+        $logs = AuditLog::with('user')
             ->orderByDesc('created_at')
             ->paginate($request->per_page ?? 10);
 
