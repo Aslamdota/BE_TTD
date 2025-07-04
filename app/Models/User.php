@@ -40,6 +40,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Signature::class);
     }
 
+    public function auditLog()
+    {
+        return $this->hasMany(AuditLog::class);
+    }
+
     public function generateKeyPair()
     {
         $config = [
