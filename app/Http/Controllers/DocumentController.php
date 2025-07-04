@@ -628,7 +628,7 @@ class DocumentController extends Controller
         return response()->download($filePath, $document->title . '.pdf');
     }
 
-    public function listDocument()
+    public function listDocument(Request $request)
     {
         $perPage = $request->input('per_page', 10);
 
