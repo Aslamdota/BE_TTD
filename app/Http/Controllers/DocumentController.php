@@ -643,12 +643,21 @@ class DocumentController extends Controller
     public function listDocument(Request $request)
     {
         $perPage = $request->input('per_page', 10);
+        $filter = $request->input('filter');
 
-        $documents = \App\Models\Document::orderByDesc('created_at')
-            ->paginate($perPage);
+        $query = \App\Models\Document::query();
+
+        if ($filter === 'verified') {
+            $query->where('hash_verified', true);
+        } elseif ($filter === 'unverified') {
+            $query->where('hash_verified', false);
+        }
+
+        $documents = $query->orderByDesc('created_at')->paginate($perPage);
 
         return response()->json($documents);
     }
+
 
     private function storeBlockchainHash(array $data)
     {
