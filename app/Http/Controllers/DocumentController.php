@@ -609,7 +609,7 @@ class DocumentController extends Controller
      *     )
      * )
      */
-    public function publicDownload($id)
+    public function publicDownload(Request $request, $id)
     {
         $document = \App\Models\Document::find($id);
         if (!$document) {
