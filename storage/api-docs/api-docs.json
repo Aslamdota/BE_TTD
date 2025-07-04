@@ -3391,6 +3391,34 @@
                     }
                 ]
             }
+        },
+        "/api/public/documents/{id}/download": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Download public document by ID",
+                "operationId": "publicDownload",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Document ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File download"
+                    },
+                    "404": {
+                        "description": "Document not found"
+                    }
+                }
+            }
         }
     },
     "components": {
