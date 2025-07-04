@@ -628,6 +628,16 @@ class DocumentController extends Controller
         return response()->download($filePath, $document->title . '.pdf');
     }
 
+    public function listDocument()
+    {
+        $perPage = $request->input('per_page', 10);
+
+        $documents = \App\Models\Document::orderByDesc('created_at')
+            ->paginate($perPage);
+
+        return response()->json($documents);
+    }
+
     private function storeBlockchainHash(array $data)
     {
         return BlockchainHash::updateOrCreate(
@@ -641,4 +651,6 @@ class DocumentController extends Controller
             ]
         );
     }
+
+    
 }

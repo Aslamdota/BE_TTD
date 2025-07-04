@@ -148,6 +148,7 @@ Route::get('/signature-proxy/{userId}/{filename}', function ($userId, $filename)
         ->header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, Authorization');
 });
 // Public route untuk download dokumen
+Route::get('/public/documents', [DocumentController::class, 'listDocument']);
 Route::get('/public/documents/{id}/download', [DocumentController::class, 'publicDownload']);
 
 /*------------------------------------------
