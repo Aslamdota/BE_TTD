@@ -23,15 +23,17 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 # Copy supervisor config
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage
-
-# Expose port
-EXPOSE 8080
-
-# Entrypoint script
+# Copy entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Set permissions for storage and bootstrap/cache
+RUN mkdir -p /var/www/storage/logs \
+    && chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage /var/www/bootstrap/cache
+
+# Expose port (nginx default 80, or 8080 if you use custom)
+EXPOSE 80
+
+# Entrypoint
+CMD ["/entrypoint.sh"]
