@@ -163,12 +163,18 @@ class DocumentController extends Controller
                 ]);
             }
         }
+        $status = null;
+        if($hashVerified == 1 || $hashVerified) {
+            $status = 'signed';
+        } else {
+            $status = 'ditolak';
+        }
 
         $document = Document::create([
             'title' => $request->title,
             'file_path' => $filePath,
             'creator_id' => $user->id,
-            'status' => 'draft',
+            'status' => $status,
             'hash' => $hash,
             'hash_verified' => $hashVerified
         ]);
