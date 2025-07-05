@@ -628,24 +628,25 @@ class AdminController extends Controller
     {
         $user = User::with('roles')->findOrFail($userId);
 
-        // Cegah hapus user dengan role admin
         if ($user->roles->contains('name', 'admin')) {
             return response()->json([
                 'message' => 'User dengan role admin tidak dapat dihapus.'
             ], 403);
         }
 
-        // Optional: Cek jika user adalah diri sendiri
         if (auth()->id() == $user->id) {
             return response()->json([
                 'message' => 'Anda tidak dapat menghapus akun Anda sendiri.'
             ], 403);
         }
 
+        $user->roles()->detach();
+
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
     }
+
 
     /**
      * @OA\Get(
