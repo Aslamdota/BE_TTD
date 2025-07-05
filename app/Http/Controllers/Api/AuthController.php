@@ -266,6 +266,7 @@ class AuthController extends Controller
                 'expires_in' => config('sanctum.expiration') * 60,
                 'user' => [
                     'id' => $user->id,
+                    'nip' => $user->nip,
                     'name' => $user->name,
                     'email' => $user->email,
                     'roles' => $user->roles->pluck('name'),
