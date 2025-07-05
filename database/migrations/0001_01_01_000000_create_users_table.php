@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('nip')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->longText('public_key')->nullable();
+            $table->longText('private_key')->nullable();
             $table->boolean('is_login')->default(false);
             $table->rememberToken();
             $table->timestamps();
