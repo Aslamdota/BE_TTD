@@ -167,7 +167,7 @@ class DocumentController extends Controller
         if($hashVerified == 1 || $hashVerified) {
             $status = 'signed';
         } else {
-            $status = 'ditolak';
+            $status = 'rejected';
         }
 
         $document = Document::create([
