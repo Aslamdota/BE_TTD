@@ -33,7 +33,6 @@ class SignatureController extends Controller
     {
         $user = $request->user();
         $signatures = Signature::with('document')
-            ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
 
