@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\PasskeyController;
 use App\Http\Controllers\Api\FaucetController;
+use App\Http\Controllers\Api\IPFSController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Response;
 |
 */
 
+Route::get('/ipfs/{cid}', [IPFSController::class, 'fetch']);
 /*------------------------------------------
 | AUTHENTICATION ROUTES
 |------------------------------------------*/
