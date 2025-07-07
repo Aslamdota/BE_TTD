@@ -36,8 +36,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-    Route::post('/faucet', [FaucetController::class, 'send']);
-
     // Protected auth endpoints
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/check-session', [AuthController::class, 'checkSession']);
@@ -51,7 +49,8 @@ Route::prefix('auth')->group(function () {
         Route::get('/passkeys', [PasskeyController::class, 'index']);
         Route::post('/passkeys', [PasskeyController::class, 'store']);
         Route::put('/passkeys/{id}/revoke', [PasskeyController::class, 'revoke']);
-
+        
+        Route::post('/faucet', [FaucetController::class, 'send']);
         Route::post('/checkParaphase', [PasskeyController::class, 'checkParaphase']);
     });
 });
