@@ -30,16 +30,19 @@ class EthFaucetService
             'id' => 1,
         ]);
 
-        $nonceHex = $nonceResponse['result'];
-        $nonce = hexdec($nonceHex);
+        if (!isset($nonceResponse['result'])) {
+            throw new \Exception('Gagal mendapatkan nonce');
+        }
+
+        $nonce = hexdec($nonceResponse['result']);
 
         $txData = [
             'nonce' => '0x' . dechex($nonce),
             'gasPrice' => '0x' . dechex(10 * 1e9),
-            'gas' => '0x5208', 
+            'gas' => '0x5208',
             'to' => $toAddress,
-            'value' => '0x' . dechex($amountEth * 1e18),
-            'chainId' => 11155111 
+            'value' => '0x' . dechex((float)$amountEth * 1e18),
+            'chainId' => 11155111,
         ];
 
         $transaction = new Transaction($txData);
@@ -53,9 +56,17 @@ class EthFaucetService
         ]);
 
         if (isset($sendTx['error'])) {
-            throw new \Exception($sendTx['error']['message']);
+            $message = $sendTx['error']['message'];
+
+            Log::error('Gagal kirim Faucet', [
+                'nonce' => $nonce,
+                'message' => $message,
+            ]);
+
+            throw new \Exception($message);
         }
 
-        return $sendTx['result']; 
+        return $sendTx['result'];
     }
+
 }
