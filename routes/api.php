@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\PasskeyController;
+use App\Http\Controllers\Api\FaucetController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BlockchainController;
@@ -35,6 +36,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+    Route::post('/faucet', [FaucetController::class, 'send']);
 
     // Protected auth endpoints
     Route::middleware('auth:sanctum')->group(function () {

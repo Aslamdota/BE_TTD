@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'faucet_private_key' => env('FAUCET_PRIVATE_KEY'),
+    'faucet_address' => env('FAUCET_ADDRESS'),
+    'sepolia_rpc' => env('SEPOLIA_RPC'),
+
 ];

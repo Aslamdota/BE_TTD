@@ -61,5 +61,33 @@ class UsersTableSeeder extends Seeder
 
             $developer->roles()->attach([1, 2]);
         }
+        
+        if (!User::where('email', 'alianiadiku@iwu.id')->exists()) {
+            $developer = User::create([
+                'name' => 'Aliani Natasania',
+                'email' => 'alianiadiku@iwu.id',
+                'password' => Hash::make('password123'),
+                'nip' => '321321312311',
+                'is_login' => false
+            ]);
+
+            $developer->generateKeyPair();
+
+            $developer->roles()->attach([1]);
+        }
+
+        if (!User::where('email', 'archy@iwu.ac.id')->exists()) {
+            $developer = User::create([
+                'name' => 'Archy Renaldy Pratama Nugraha, S.Kom., M.T',
+                'email' => 'archy@iwu.ac.id',
+                'password' => Hash::make('arpn1234'),
+                'nip' => '123456789',
+                'is_login' => false
+            ]);
+
+            $developer->generateKeyPair();
+
+            $developer->roles()->attach([1, 2]);
+        }
     }
 }
