@@ -26,7 +26,7 @@ class EthFaucetService
         $nonceResponse = Http::post($this->rpc, [
             'jsonrpc' => '2.0',
             'method' => 'eth_getTransactionCount',
-            'params' => [$this->fromAddress, 'latest'],
+            'params' => [$this->fromAddress, 'pending'],
             'id' => 1,
         ]);
 
