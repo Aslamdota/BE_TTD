@@ -26,28 +26,34 @@ class FaucetController extends Controller
         $ip = $request->ip();
 
         $now = now();
-        $expiresAt = $now->addHour();
+        $expiresAt = $now->copy()->addHour();
 
-        // === 1. Cek limit berdasarkan wallet address ===
+        $checkThrottle = function ($cacheKey, $label) use ($now) {
+            if (Cache::has($cacheKey)) {
+                $data = Cache::get($cacheKey);
+                if (isset($data['expires_at']) && $data['expires_at'] instanceof \Carbon\Carbon) {
+                    if ($data['expires_at']->greaterThan($now)) {
+                        $minutes = $now->diffInMinutes($data['expires_at']);
+                        return response()->json([
+                            'message' => "⏳ {$label} sudah request. Coba lagi dalam {$minutes} menit."
+                        ], 429);
+                    } else {
+                        Cache::forget($cacheKey);
+                    }
+                } else {
+                    Cache::forget($cacheKey);
+                }
+            }
+            return null;
+        };
+
         $cacheAddress = "faucet_wallet_" . $address;
-        if (Cache::has($cacheAddress)) {
-            $minutes = max(0, $now->diffInMinutes(Cache::get($cacheAddress)['expires_at']));
-            return response()->json(['message' => "⏳ Wallet sudah request. Coba lagi dalam {$minutes} menit."], 429);
-        }
-
-        // === 2. Cek limit berdasarkan user ID ===
         $cacheUser = "faucet_user_" . $userId;
-        if (Cache::has($cacheUser)) {
-            $minutes = max(0, $now->diffInMinutes(Cache::get($cacheUser)['expires_at']));
-            return response()->json(['message' => "⏳ Anda sudah request. Coba lagi dalam {$minutes} menit."], 429);
-        }
-
-        // === 3. Cek limit berdasarkan IP ===
         $cacheIp = "faucet_ip_" . $ip;
-        if (Cache::has($cacheIp)) {
-            $minutes = max(0, $now->diffInMinutes(Cache::get($cacheIp)['expires_at']));
-            return response()->json(['message' => "⏳ IP Anda sudah request. Coba lagi dalam {$minutes} menit."], 429);
-        }
+
+        if ($response = $checkThrottle($cacheAddress, 'Wallet')) return $response;
+        if ($response = $checkThrottle($cacheUser, 'Anda')) return $response;
+        if ($response = $checkThrottle($cacheIp, 'IP Anda')) return $response;
 
         try {
             $txHash = $faucet->sendEth($address);
@@ -62,4 +68,5 @@ class FaucetController extends Controller
             return response()->json(['status' => 'fail', 'message' => $e->getMessage()], 500);
         }
     }
+
 }
