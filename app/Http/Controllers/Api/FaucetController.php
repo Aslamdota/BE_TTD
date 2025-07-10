@@ -68,5 +68,4 @@ class FaucetController extends Controller
             return response()->json(['status' => 'fail', 'message' => $e->getMessage()], 500);
         }
     }
-
 }
