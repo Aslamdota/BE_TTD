@@ -31,21 +31,21 @@ class FaucetController extends Controller
         // === 1. Cek limit berdasarkan wallet address ===
         $cacheAddress = "faucet_wallet_" . $address;
         if (Cache::has($cacheAddress)) {
-            $minutes = $now->diffInMinutes(Cache::get($cacheAddress)['expires_at']);
+            $minutes = max(0, $now->diffInMinutes(Cache::get($cacheAddress)['expires_at']));
             return response()->json(['message' => "⏳ Wallet sudah request. Coba lagi dalam {$minutes} menit."], 429);
         }
 
         // === 2. Cek limit berdasarkan user ID ===
         $cacheUser = "faucet_user_" . $userId;
         if (Cache::has($cacheUser)) {
-            $minutes = $now->diffInMinutes(Cache::get($cacheUser)['expires_at']);
+            $minutes = max(0, $now->diffInMinutes(Cache::get($cacheUser)['expires_at']));
             return response()->json(['message' => "⏳ Anda sudah request. Coba lagi dalam {$minutes} menit."], 429);
         }
 
         // === 3. Cek limit berdasarkan IP ===
         $cacheIp = "faucet_ip_" . $ip;
         if (Cache::has($cacheIp)) {
-            $minutes = $now->diffInMinutes(Cache::get($cacheIp)['expires_at']);
+            $minutes = max(0, $now->diffInMinutes(Cache::get($cacheIp)['expires_at']));
             return response()->json(['message' => "⏳ IP Anda sudah request. Coba lagi dalam {$minutes} menit."], 429);
         }
 

@@ -43,5 +43,4 @@ class IPFSController extends Controller
             return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
-
 }
