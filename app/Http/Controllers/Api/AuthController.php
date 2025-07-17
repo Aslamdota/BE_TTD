@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 /**
  * @OA\Info(
  * title="VirSign API Documentation",
- * version="1.0"
+ * version="2.0"
  * )
  *
  * @OA\Server(
@@ -850,14 +850,14 @@ class AuthController extends Controller
         $user = \App\Models\User::findOrFail($userId);
         $user->password = \Hash::make($request->password);
         $user->save();
-    
+
         \App\Models\AuditLog::create([
             'user_id' => auth()->id(),
             'action' => 'admin_change_password',
             'description' => 'Admin changed password for user ID: '.$userId,
             'ip_address' => $request->ip()
         ]);
-    
+
         return response()->json(['message' => 'Password updated successfully']);
     }
 
@@ -936,7 +936,7 @@ class AuthController extends Controller
         $user->update($request->only('name', 'nip'));
         return response()->json(['status' => true, 'message' => 'Profil berhasil diupdate', 'user' => $user]);
     }
-    
+
     /**
      * @OA\Post(
      *     path="/api/user/change-password",
